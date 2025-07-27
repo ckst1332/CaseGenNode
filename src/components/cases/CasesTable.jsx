@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 
@@ -48,7 +48,7 @@ export default function CasesTable({ cases }) {
                 </TableCell>
                 <TableCell>{format(new Date(case_item.created_date), "MMM d, yyyy")}</TableCell>
                 <TableCell>
-                  <Link to={createPageUrl(`Case?id=${case_item.id}`)}>
+                  <Link href={createPageUrl(`Case?id=${case_item.id}`)}>
                     <Button variant="outline" size="sm">
                         View <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
