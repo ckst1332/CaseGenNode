@@ -21,7 +21,8 @@ export default async function handler(req, res) {
         userId,
         user,
         allUserIds: Object.keys(allUsers),
-        sessionUser: session.user
+        sessionUser: session.user,
+        message: user ? "User found in storage" : "User NOT found in storage"
       });
     }
     

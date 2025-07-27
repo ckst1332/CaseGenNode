@@ -63,6 +63,7 @@ export default async function handler(req, res) {
       };
     }
     
+    console.log(`LLM invocation completed for user: ${session.user.id || session.user.email}`);
     return res.status(200).json(mockResponse);
   } catch (error) {
     console.error("Error in /api/integrations/invoke-llm:", error);

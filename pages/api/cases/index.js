@@ -40,6 +40,7 @@ export default async function handler(req, res) {
       // Store case
       storage.saveCase(caseId, newCase);
       
+      console.log(`Created new case: ${caseId} for user: ${userId}`);
       return res.status(201).json(newCase);
     }
     
