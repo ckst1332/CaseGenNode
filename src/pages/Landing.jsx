@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,16 +27,7 @@ export default function Landing() {
   const navigate = useNavigate();
 
   const handleStartFree = async () => {
-    try {
-      const user = await User.me();
-      if (user?.subscription_tier) {
-        navigate(createPageUrl("Dashboard"));
-      } else {
-        navigate(createPageUrl("Signup"));
-      }
-    } catch (e) {
-      navigate(createPageUrl("Signup"));
-    }
+    await signIn("google", { callbackUrl: "/onboarding" });
   };
 
   const handleLogin = async () => {
