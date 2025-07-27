@@ -71,31 +71,82 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       // Force reset test user
       try {
-        const now = new Date();
-        const testUser = {
-          id: TEST_USER_ID,
-          email: TEST_USER_EMAIL,
-          full_name: 'Jeff Sit',
-          subscription_tier: 'test',
-          credits_remaining: 999999,
-          credits_used_this_month: 0,
-          total_cases_generated: 0,
-          created_at: now.toISOString(),
-          last_case_date: null,
-          last_credit_reset: now.toISOString(),
-          is_test_user: true,
-          updated_at: now.toISOString()
-        };
+        // First, try to find existing user by email (in case of ID mismatch)
+        const { data: existingUsers, error: searchError } = await supabaseStorage.supabase
+          .from('users')
+          .select('*')
+          .eq('email', TEST_USER_EMAIL);
         
-        const savedUser = await supabaseStorage.saveUser(TEST_USER_ID, testUser);
-        
-        console.log('🔄 Force reset test user:', savedUser);
-        
-        return res.status(200).json({
-          message: "Test user force reset",
-          user: savedUser,
-          action: "force_reset"
-        });
+        if (existingUsers && existingUsers.length > 0) {
+          console.log('Found existing users with email:', existingUsers);
+          
+          // Update the existing user to have the correct ID and reset credits
+          const existingUser = existingUsers[0];
+          const now = new Date();
+          
+          const updatedUser = {
+            id: TEST_USER_ID,
+            email: TEST_USER_EMAIL,
+            full_name: 'Jeff Sit',
+            subscription_tier: 'test',
+            credits_remaining: 999999,
+            credits_used_this_month: 0,
+            total_cases_generated: 0,
+            last_case_date: null,
+            last_credit_reset: now.toISOString(),
+            is_test_user: true,
+            updated_at: now.toISOString(),
+            created_at: existingUser.created_at || now.toISOString()
+          };
+          
+          // Update existing record
+          const { data, error } = await supabaseStorage.supabase
+            .from('users')
+            .update(updatedUser)
+            .eq('email', TEST_USER_EMAIL)
+            .select()
+            .single();
+          
+          if (error) {
+            console.error('Update error:', error);
+            throw error;
+          }
+          
+          console.log('🔄 Updated test user:', data);
+          
+          return res.status(200).json({
+            message: "Test user updated successfully",
+            user: data,
+            action: "updated_existing"
+          });
+        } else {
+          // Create new user
+          const now = new Date();
+          const testUser = {
+            id: TEST_USER_ID,
+            email: TEST_USER_EMAIL,
+            full_name: 'Jeff Sit',
+            subscription_tier: 'test',
+            credits_remaining: 999999,
+            credits_used_this_month: 0,
+            total_cases_generated: 0,
+            created_at: now.toISOString(),
+            last_case_date: null,
+            last_credit_reset: now.toISOString(),
+            is_test_user: true,
+            updated_at: now.toISOString()
+          };
+          
+          const savedUser = await supabaseStorage.saveUser(TEST_USER_ID, testUser);
+          
+          console.log('🔄 Created new test user:', savedUser);
+          
+          return res.status(200).json({
+            message: "Test user created successfully",
+            user: savedUser,
+            action: "created_new"
+          });
+        }
         
       } catch (dbError) {
         console.error('❌ Force reset error:', dbError);
