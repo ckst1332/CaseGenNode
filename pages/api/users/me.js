@@ -6,7 +6,16 @@ import { storage } from "../../../lib/storage";
 const DEFAULT_CREDITS = {
   free: 3, // 3 cases per month for free users
   basic: 50, // 50 cases per month for basic plan
-  pro: 999 // Unlimited (999) cases for pro plan
+  pro: 999, // Unlimited (999) cases for pro plan
+  test: 999999 // Test users get virtually unlimited credits
+};
+
+// Test user with unlimited credits
+const TEST_USER_EMAIL = "jeff.sit13@gmail.com";
+
+// Helper function to check if user is test user
+const isTestUser = (email) => {
+  return email === TEST_USER_EMAIL;
 };
 
 // Helper function to check if we're in a new month
@@ -23,6 +32,14 @@ const isNewMonth = (lastResetDate) => {
 // Helper function to reset monthly credits
 const resetMonthlyCredits = (user) => {
   const now = new Date();
+  // Test users don't get monthly resets - they keep unlimited credits
+  if (user.subscription_tier === 'test' || user.is_test_user) {
+    return {
+      ...user,
+      last_credit_reset: now.toISOString()
+    };
+  }
+  
   return {
     ...user,
     credits_remaining: DEFAULT_CREDITS[user.subscription_tier] || DEFAULT_CREDITS.free,
@@ -42,11 +59,33 @@ export default async function handler(req, res) {
     const userId = session.user.id || session.user.email;
     
     if (req.method === 'GET') {
-      // Get or create user
+      // 🎯 SPECIAL HANDLING FOR TEST USER - ALWAYS RETURN UNLIMITED CREDITS
+      if (isTestUser(session.user.email)) {
+        const now = new Date();
+        const user = {
+          id: userId,
+          email: session.user.email,
+          full_name: session.user.name,
+          subscription_tier: 'test',
+          credits_remaining: DEFAULT_CREDITS.test,
+          credits_used_this_month: 0,
+          total_cases_generated: 0,
+          created_date: now.toISOString(),
+          last_case_date: null,
+          last_credit_reset: now.toISOString(),
+          is_test_user: true
+        };
+        
+        console.log(`🎯 TEST USER DETECTED: ${session.user.email}, returning unlimited credits: ${user.credits_remaining}`);
+        return res.status(200).json(user);
+      }
+      
+      // Regular user handling with storage
       let user = storage.getUser(userId);
       if (!user) {
         // Create new user with default credits and proper tracking
         const now = new Date();
+        
         user = {
           id: userId,
           email: session.user.email,
@@ -57,9 +96,12 @@ export default async function handler(req, res) {
           total_cases_generated: 0,
           created_date: now.toISOString(),
           last_case_date: null,
-          last_credit_reset: now.toISOString()
+          last_credit_reset: now.toISOString(),
+          is_test_user: false
         };
         storage.saveUser(userId, user);
+        
+        console.log(`Created new regular user: ${session.user.email}, credits: ${user.credits_remaining}`);
       } else {
         // Check if we need to reset monthly credits
         if (isNewMonth(user.last_credit_reset)) {
@@ -72,7 +114,28 @@ export default async function handler(req, res) {
     }
     
     if (req.method === 'PATCH') {
-      // Update user data
+      // 🎯 SPECIAL HANDLING FOR TEST USER - ALWAYS RETURN UNLIMITED CREDITS, IGNORE UPDATES
+      if (isTestUser(session.user.email)) {
+        const now = new Date();
+        const user = {
+          id: userId,
+          email: session.user.email,
+          full_name: session.user.name,
+          subscription_tier: 'test',
+          credits_remaining: DEFAULT_CREDITS.test,
+          credits_used_this_month: 0,
+          total_cases_generated: 0,
+          created_date: now.toISOString(),
+          last_case_date: null,
+          last_credit_reset: now.toISOString(),
+          is_test_user: true
+        };
+        
+        console.log(`🎯 TEST USER PATCH: ${session.user.email}, maintaining unlimited credits: ${user.credits_remaining}`);
+        return res.status(200).json(user);
+      }
+      
+      // Regular user update handling
       let user = storage.getUser(userId);
       if (!user) {
         console.log(`User not found for PATCH: ${userId}`);
