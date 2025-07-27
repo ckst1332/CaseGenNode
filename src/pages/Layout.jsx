@@ -1,8 +1,8 @@
 
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   LayoutDashboard,
   Plus,
@@ -27,23 +27,23 @@ import { Button } from "@/components/ui/button";
 const navigationItems = [
   {
     title: "Dashboard",
-    url: createPageUrl("Dashboard"),
+    url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
     title: "Generate Case",
-    url: createPageUrl("Generate"),
+    url: "/generate",
     icon: Plus,
   },
   {
     title: "My Cases",
-    url: createPageUrl("Cases"),
+    url: "/cases",
     icon: FileText,
   },
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const location = useLocation();
+  const router = useRouter();
 
   if (["Landing", "Login", "Signup"].includes(currentPageName)) {
     return <div className="min-h-screen">{children}</div>;
@@ -54,7 +54,7 @@ export default function Layout({ children, currentPageName }) {
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-slate-100">
         <Sidebar className="border-r border-slate-200 bg-white shadow-xl">
           <SidebarHeader className="border-b border-slate-200 p-6">
-            <Link to={createPageUrl("Landing")} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <Calculator className="w-6 h-6 text-white" />
               </div>
@@ -77,10 +77,10 @@ export default function Layout({ children, currentPageName }) {
                       <SidebarMenuButton 
                         asChild 
                         className={`group hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl py-3 px-3 ${
-                          location.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600'
+                          router.pathname === item.url ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600'
                         }`}
                       >
-                        <Link to={item.url} className="flex items-center gap-3">
+                        <Link href={item.url} className="flex items-center gap-3">
                           <item.icon className="w-5 h-5" />
                           <span className="font-semibold">{item.title}</span>
                         </Link>

@@ -1,19 +1,32 @@
 const API_BASE_URL = '/api';
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    },
-    ...options
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || response.statusText);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      },
+      ...options
+    });
+    
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
+    }
+    
+    if (response.status === 204) return null;
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    return await response.text();
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
   }
-  if (response.status === 204) return null;
-  return response.json();
 }
 
 export const apiClient = {
