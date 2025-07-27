@@ -41,49 +41,28 @@ export default async function handler(req, res) {
       // Create new case
       try {
         // First verify the user exists in the database to prevent foreign key constraint violation
-        const existingUser = await supabaseStorage.getUser(userId);
-        if (!existingUser) {
-          console.error('User not found in database:', userId);
-          
-          // Check if this is the test user - if so, create them now
-          const TEST_USER_EMAIL = "jeff.sit13@gmail.com";
-          if (session.user.email === TEST_USER_EMAIL) {
-            console.log('Creating missing test user in database...');
-            try {
-              const now = new Date();
-              const testUser = {
-                id: userId,
-                email: session.user.email,
-                full_name: session.user.name,
-                subscription_tier: 'test',
-                credits_remaining: 999999,
-                credits_used_this_month: 0,
-                total_cases_generated: 0,
-                created_at: now.toISOString(),
-                last_case_date: null,
-                last_credit_reset: now.toISOString(),
-                is_test_user: true,
-                updated_at: now.toISOString()
-              };
-              
-              const createdUser = await supabaseStorage.saveUser(userId, testUser);
-              console.log('✅ Test user created in database for case creation:', createdUser.id);
-            } catch (createError) {
-              console.error('Failed to create test user:', createError);
-              return res.status(500).json({ 
-                error: "Failed to create test user", 
-                details: createError.message 
-              });
-            }
-          } else {
-            return res.status(400).json({ 
-              error: "User not found", 
-              details: `User ${userId} does not exist in database. Please refresh and try again.` 
-            });
+        let existingUser = await supabaseStorage.getUser(userId);
+        
+        // If not found by userId, try by email (for users who might be stored by email as ID)
+        if (!existingUser && session.user.email) {
+          console.log('User not found by ID, trying by email:', session.user.email);
+          existingUser = await supabaseStorage.getUser(session.user.email);
+          if (existingUser) {
+            console.log('Found user by email instead of ID:', existingUser.id);
+            // Update userId to match what's in database to prevent foreign key issues
+            userId = existingUser.id;
           }
-        } else {
-          console.log('User verified for case creation:', existingUser.id, existingUser.email);
         }
+        
+        if (!existingUser) {
+          console.error('User not found in database by ID or email:', userId, session.user.email);
+          return res.status(400).json({ 
+            error: "User not found", 
+            details: `User ${userId} (${session.user.email}) does not exist in database. Please refresh and try again.` 
+          });
+        }
+        
+        console.log('User verified for case creation:', existingUser.id, existingUser.email);
         
         const caseData = req.body;
         const caseId = `case_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
