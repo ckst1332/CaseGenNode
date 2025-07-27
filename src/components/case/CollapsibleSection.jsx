@@ -8,19 +8,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export default function CollapsibleSection({ 
-  title, 
-  icon: Icon, 
-  children, 
-  defaultOpen = true, 
+function CollapsibleSection({
+  title,
+  icon: Icon,
+  children,
+  defaultOpen = true,
   helpText,
-  badge 
+  badge,
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <Card className="shadow-lg border-0">
-      <CardHeader 
+      <CardHeader
         className="cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -57,3 +57,5 @@ export default function CollapsibleSection({
     </Card>
   );
 }
+
+export default React.memo(CollapsibleSection);

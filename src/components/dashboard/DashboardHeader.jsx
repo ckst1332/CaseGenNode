@@ -4,7 +4,7 @@ import { Plus, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function DashboardHeader({ user }) {
+function DashboardHeader({ user }) {
   const firstName = user?.full_name ? user.full_name.split(' ')[0] : '';
 
   return (
@@ -17,7 +17,7 @@ export default function DashboardHeader({ user }) {
           Continue your financial modeling journey or create a new case.
         </p>
       </div>
-      
+
       <div className="flex gap-3">
         <Link to={createPageUrl("Generate")}>
           <Button className="bg-blue-600 hover:bg-blue-700">
@@ -35,3 +35,5 @@ export default function DashboardHeader({ user }) {
     </div>
   );
 }
+
+export default React.memo(DashboardHeader);

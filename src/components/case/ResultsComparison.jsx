@@ -1,31 +1,28 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus, CheckCircle } from "lucide-react";
-import { format } from "date-fns";
+import format from "date-fns/format";
 
-export default function ResultsComparison({ userResults, answerKey }) {
+function ResultsComparison({ userResults, answerKey }) {
   const formatNumber = (num, type = 'currency') => {
     let numericValue = num;
     if (typeof numericValue === 'string') {
       numericValue = parseFloat(numericValue.replace(/,/g, ''));
     }
-
     if (numericValue === null || numericValue === undefined || typeof numericValue !== 'number' || isNaN(numericValue)) {
       return '-';
     }
-    
     if (type === 'percentage') {
       return `${(numericValue * 100).toFixed(1)}%`;
     }
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD', 
-      minimumFractionDigits: 0, 
-      maximumFractionDigits: 0 
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(numericValue);
   };
-  
+
   const metrics = [
     { key: 'npv', name: 'NPV', type: 'currency' },
     { key: 'irr', name: 'IRR', type: 'percentage' },
@@ -36,10 +33,17 @@ export default function ResultsComparison({ userResults, answerKey }) {
     if (typeof correctNum === 'string') {
       correctNum = parseFloat(correctNum.replace(/,/g, ''));
     }
-
-    if (user === null || user === undefined || correctNum === null || correctNum === undefined || 
-        typeof user !== 'number' || typeof correctNum !== 'number' || 
-        isNaN(user) || isNaN(correctNum) || correctNum === 0) {
+    if (
+      user === null ||
+      user === undefined ||
+      correctNum === null ||
+      correctNum === undefined ||
+      typeof user !== 'number' ||
+      typeof correctNum !== 'number' ||
+      isNaN(user) ||
+      isNaN(correctNum) ||
+      correctNum === 0
+    ) {
       return (
         <div className="flex items-center gap-1 text-slate-500">
           <Minus className="w-4 h-4" />
@@ -47,13 +51,12 @@ export default function ResultsComparison({ userResults, answerKey }) {
         </div>
       );
     }
-    
+
     const delta = (user - correctNum) / Math.abs(correctNum);
-    const isGood = Math.abs(delta) <= 0.1; // within 10% is good
-    
+    const isGood = Math.abs(delta) <= 0.1;
     const color = isGood ? 'text-green-600' : 'text-red-600';
     const Icon = delta >= 0 ? TrendingUp : TrendingDown;
-    
+
     return (
       <div className={`flex items-center gap-1 font-semibold ${color}`}>
         <Icon className="w-4 h-4" />
@@ -97,7 +100,7 @@ export default function ResultsComparison({ userResults, answerKey }) {
               </tr>
             </thead>
             <tbody>
-              {metrics.map(metric => (
+              {metrics.map((metric) => (
                 <tr key={metric.key} className="border-b border-slate-100">
                   <td className="p-3 font-semibold">{metric.name}</td>
                   <td className="p-3">{formatNumber(userResults[metric.key], metric.type)}</td>
@@ -112,3 +115,5 @@ export default function ResultsComparison({ userResults, answerKey }) {
     </Card>
   );
 }
+
+export default React.memo(ResultsComparison);

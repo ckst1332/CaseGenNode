@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Target, RefreshCcw, Lightbulb } from "lucide-react";
+import { RefreshCcw, Lightbulb } from "lucide-react";
 import { InvokeLLM } from "@/api/integrations";
 
 const prompt = `
-Generate 3 unique and actionable tips for a financial analyst looking to improve their DCF valuation skills. 
-The tips should be concise (one sentence each) and focus on practical, non-obvious advice. 
+Generate 3 unique and actionable tips for a financial analyst looking to improve their DCF valuation skills.
+The tips should be concise (one sentence each) and focus on practical, non-obvious advice.
 Avoid generic tips like "double-check your work."
 
 Example of good tips:
@@ -19,41 +19,41 @@ Example of good tips:
 const schema = {
   type: "object",
   properties: {
-    tips: {
-      type: "array",
-      items: { type: "string" }
-    }
+    tips: { type: "array", items: { type: "string" } },
   },
-  required: ["tips"]
+  required: ["tips"],
 };
 
 export default function PerformanceTips() {
   const [tips, setTips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTips = async () => {
+  const fetchTips = async (mounted = true) => {
     setIsLoading(true);
     try {
-      const result = await InvokeLLM({
-        prompt: prompt,
-        response_json_schema: schema,
-      });
-      if (result && result.tips) {
+      const result = await InvokeLLM({ prompt, response_json_schema: schema });
+      if (mounted && result && result.tips) {
         setTips(result.tips);
       }
     } catch (error) {
       console.error("Error fetching performance tips:", error);
-      setTips([
-        "Take time to understand the company's business model before diving into calculations.",
-        "Pay close attention to growth assumptions and market conditions.",
-        "Double-check your discount rate calculations for DCF models."
-      ]);
+      if (mounted) {
+        setTips([
+          "Take time to understand the company's business model before diving into calculations.",
+          "Pay close attention to growth assumptions and market conditions.",
+          "Double-check your discount rate calculations for DCF models.",
+        ]);
+      }
     }
-    setIsLoading(false);
+    if (mounted) setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchTips();
+    let isMounted = true;
+    fetchTips(isMounted);
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -87,9 +87,7 @@ export default function PerformanceTips() {
             {tips.map((tip, index) => (
               <div key={index} className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                <p className="text-sm text-blue-800">
-                  {tip}
-                </p>
+                <p className="text-sm text-blue-800">{tip}</p>
               </div>
             ))}
           </div>

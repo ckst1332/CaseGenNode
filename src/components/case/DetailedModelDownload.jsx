@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -153,6 +153,7 @@ const generateFullModelCsv = (caseData) => {
 
 export default function DetailedModelDownload({ caseData }) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const csvContent = useMemo(() => generateFullModelCsv(caseData), [caseData]);
 
   const handleDownload = async () => {
     if (!caseData.answer_key) {
@@ -163,8 +164,6 @@ export default function DetailedModelDownload({ caseData }) {
     
     try {
       // Generate the CSV content
-      const csvContent = generateFullModelCsv(caseData);
-      
       if (!csvContent) {
         throw new Error("No model data available for download");
       }

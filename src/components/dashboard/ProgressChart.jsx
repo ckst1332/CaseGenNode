@@ -1,34 +1,29 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, subMonths, startOfMonth } from 'date-fns';
+import format from 'date-fns/format';
+import subMonths from 'date-fns/subMonths';
+import startOfMonth from 'date-fns/startOfMonth';
 
-export default function ProgressChart({ cases, isLoading }) {
-  // Generate progress data based on case creation dates
+function ProgressChart({ cases, isLoading }) {
   const generateProgressData = () => {
     if (!cases || cases.length === 0) return [];
-
     const months = [];
     const currentDate = new Date();
-    
-    // Get last 6 months
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(currentDate, i);
       months.push({
         name: format(monthDate, 'MMM'),
         month: startOfMonth(monthDate),
         totalCases: 0,
-        completedCases: 0
+        completedCases: 0,
       });
     }
-
-    // Count cases for each month
-    cases.forEach(caseItem => {
+    cases.forEach((caseItem) => {
       const caseDate = new Date(caseItem.created_date);
       const caseMonth = startOfMonth(caseDate);
-      
-      const monthData = months.find(m => m.month.getTime() === caseMonth.getTime());
+      const monthData = months.find((m) => m.month.getTime() === caseMonth.getTime());
       if (monthData) {
         monthData.totalCases++;
         if (caseItem.status === 'completed') {
@@ -36,24 +31,20 @@ export default function ProgressChart({ cases, isLoading }) {
         }
       }
     });
-
-    // Convert to cumulative data
     let totalAccumulated = 0;
     let completedAccumulated = 0;
-    
-    return months.map(month => {
+    return months.map((month) => {
       totalAccumulated += month.totalCases;
       completedAccumulated += month.completedCases;
-      
       return {
         name: month.name,
         'Total Cases': totalAccumulated,
-        'Completed Cases': completedAccumulated
+        'Completed Cases': completedAccumulated,
       };
     });
   };
 
-  const progressData = generateProgressData();
+  const progressData = useMemo(generateProgressData, [cases]);
 
   return (
     <Card className="border-0 shadow-sm">
@@ -67,31 +58,10 @@ export default function ProgressChart({ cases, isLoading }) {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={progressData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#64748b' }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#64748b' }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="Total Cases" 
-                stroke="#3b82f6" 
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', strokeWidth: 0, r: 4 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="Completed Cases" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 0, r: 4 }}
-              />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+              <Line type="monotone" dataKey="Total Cases" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', strokeWidth: 0, r: 4 }} />
+              <Line type="monotone" dataKey="Completed Cases" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', strokeWidth: 0, r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -99,3 +69,5 @@ export default function ProgressChart({ cases, isLoading }) {
     </Card>
   );
 }
+
+export default React.memo(ProgressChart);

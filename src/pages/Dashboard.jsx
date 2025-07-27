@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Case } from "@/api/entities";
 import { User } from "@/api/entities";
 import { Link } from "react-router-dom";
@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import DashboardStats from "../components/dashboard/DashboardStats";
-import ProgressChart from "../components/dashboard/ProgressChart";
-import IndustryChart from "../components/dashboard/IndustryChart";
+const ProgressChart = React.lazy(() => import("../components/dashboard/ProgressChart"));
+const IndustryChart = React.lazy(() => import("../components/dashboard/IndustryChart"));
 import RecentCasesTable from "../components/dashboard/RecentCasesTable";
 
 export default function Dashboard() {
@@ -58,8 +58,12 @@ export default function Dashboard() {
       />
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <ProgressChart cases={cases} isLoading={isLoading} />
-        <IndustryChart cases={cases} isLoading={isLoading} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <ProgressChart cases={cases} isLoading={isLoading} />
+        </Suspense>
+        <Suspense fallback={<div>Loading...</div>}>
+          <IndustryChart cases={cases} isLoading={isLoading} />
+        </Suspense>
       </div>
 
       <RecentCasesTable cases={cases.slice(0, 5)} isLoading={isLoading} />
