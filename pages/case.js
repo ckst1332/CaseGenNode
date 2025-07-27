@@ -22,10 +22,10 @@ import Link from "next/link";
 import Layout from "../src/pages/Layout";
 
 // Import new components
-import FinancialStatementsTemplate from "../components/case/FinancialStatementsTemplate";
-import ResultsEntry from "../components/case/ResultsEntry";
-import ResultsComparison from "../components/case/ResultsComparison";
-import DetailedModelDownload from "../components/case/DetailedModelDownload";
+import FinancialStatementsTemplate from "../src/components/case/FinancialStatementsTemplate";
+import ResultsEntry from "../src/components/case/ResultsEntry";
+import ResultsComparison from "../src/components/case/ResultsComparison";
+import DetailedModelDownload from "../src/components/case/DetailedModelDownload";
 
 // API Client
 const apiClient = {
