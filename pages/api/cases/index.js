@@ -45,6 +45,7 @@ export default async function handler(req, res) {
         const newCase = {
           id: caseId,
           user_id: userId,
+          title: caseData.name, // Keep old field for backwards compatibility
           name: caseData.name,
           type: caseData.type || 'DCF',
           status: caseData.status || 'template',

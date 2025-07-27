@@ -15,6 +15,9 @@ UPDATE cases SET name = 'Untitled Case' WHERE name IS NULL;
 UPDATE cases SET type = 'DCF' WHERE type IS NULL;
 UPDATE cases SET status = 'template' WHERE status IS NULL;
 
+-- Make title nullable for backwards compatibility during transition
+ALTER TABLE cases ALTER COLUMN title DROP NOT NULL;
+
 -- Make name required
 ALTER TABLE cases ALTER COLUMN name SET NOT NULL;
 
