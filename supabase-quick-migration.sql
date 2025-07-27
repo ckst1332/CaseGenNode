@@ -18,6 +18,15 @@ UPDATE cases SET status = 'template' WHERE status IS NULL;
 -- Make name required
 ALTER TABLE cases ALTER COLUMN name SET NOT NULL;
 
--- Add status constraint
-ALTER TABLE cases ADD CONSTRAINT IF NOT EXISTS cases_status_check 
-CHECK (status IN ('template', 'submit_results', 'completed'));
+-- Add status constraint (with proper PostgreSQL syntax)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'cases_status_check' 
+        AND table_name = 'cases'
+    ) THEN
+        ALTER TABLE cases ADD CONSTRAINT cases_status_check 
+        CHECK (status IN ('template', 'submit_results', 'completed'));
+    END IF;
+END $$;
