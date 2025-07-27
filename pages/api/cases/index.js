@@ -1,9 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-
-// Mock cases database - in production, this would connect to a real database
-const cases = new Map();
-const userCases = new Map(); // Maps user IDs to their case IDs
+import { storage } from "../../../lib/storage";
 
 export default async function handler(req, res) {
   try {
@@ -17,8 +14,7 @@ export default async function handler(req, res) {
     
     if (req.method === 'GET') {
       // List user's cases
-      const userCaseIds = userCases.get(userId) || [];
-      const userCasesList = userCaseIds.map(id => cases.get(id)).filter(Boolean);
+      let userCasesList = storage.getUserCases(userId);
       
       // Sort by created_date if order parameter is provided
       const order = req.query.order;
@@ -42,12 +38,7 @@ export default async function handler(req, res) {
       };
       
       // Store case
-      cases.set(caseId, newCase);
-      
-      // Add to user's cases
-      const currentUserCases = userCases.get(userId) || [];
-      currentUserCases.push(caseId);
-      userCases.set(userId, currentUserCases);
+      storage.saveCase(caseId, newCase);
       
       return res.status(201).json(newCase);
     }

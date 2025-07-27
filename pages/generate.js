@@ -243,7 +243,7 @@ export default function Generate() {
       const newCase = await Case.create({
         name: caseName,
         type: "DCF",
-        status: "awaiting_results",
+        status: "completed", // Mark as completed since we have the full model
         industry: industry,
         company_description: scenarioResult.company_description,
         starting_point: scenarioResult.starting_point,
@@ -259,7 +259,7 @@ export default function Generate() {
       setGenerationStep(4); 
       setTimeout(() => {
         router.push(`/case?id=${newCase.id}`);
-      }, 1000);
+      }, 2000); // Increased timeout to ensure user sees completion
 
     } catch (err) {
       console.error("Error generating case:", err);

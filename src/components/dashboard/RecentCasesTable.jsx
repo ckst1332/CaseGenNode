@@ -72,7 +72,7 @@ function RecentCasesTable({ cases, isLoading }) {
                       <Badge className={statusConfig.className}>{statusConfig.text}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Link href={createPageUrl(`Case?id=${caseItem.id}`)}>
+                      <Link href={`/case?id=${caseItem.id}`}>
                         <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                           {caseItem.status === 'completed' ? 'View' : 'Continue'}
                         </Button>

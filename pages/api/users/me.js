@@ -1,8 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-
-// Mock user database - in production, this would connect to a real database
-const users = new Map();
+import { storage } from "../../../lib/storage";
 
 // Default credit allocation based on subscription tier
 const DEFAULT_CREDITS = {
@@ -23,9 +21,10 @@ export default async function handler(req, res) {
     
     if (req.method === 'GET') {
       // Get or create user
-      if (!users.has(userId)) {
+      let user = storage.getUser(userId);
+      if (!user) {
         // Create new user with default credits
-        const newUser = {
+        user = {
           id: userId,
           email: session.user.email,
           full_name: session.user.name,
@@ -35,25 +34,24 @@ export default async function handler(req, res) {
           created_date: new Date().toISOString(),
           last_case_date: null
         };
-        users.set(userId, newUser);
+        storage.saveUser(userId, user);
       }
       
-      const user = users.get(userId);
       return res.status(200).json(user);
     }
     
     if (req.method === 'PATCH') {
       // Update user data
-      if (!users.has(userId)) {
+      const user = storage.getUser(userId);
+      if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       
-      const user = users.get(userId);
       const updates = req.body;
       
       // Update user with new data
       const updatedUser = { ...user, ...updates };
-      users.set(userId, updatedUser);
+      storage.saveUser(userId, updatedUser);
       
       return res.status(200).json(updatedUser);
     }

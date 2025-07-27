@@ -1,8 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-
-// Mock cases database - in production, this would connect to a real database
-const cases = new Map();
+import { storage } from "../../../lib/storage";
 
 export default async function handler(req, res) {
   try {
@@ -16,7 +14,7 @@ export default async function handler(req, res) {
     const userId = session.user.id || session.user.email;
     
     if (req.method === 'GET') {
-      const caseData = cases.get(id);
+      const caseData = storage.getCase(id);
       
       if (!caseData) {
         return res.status(404).json({ error: "Case not found" });

@@ -54,7 +54,27 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+    
+    // Refresh data when user comes back to the page
+    const handleFocus = () => {
+      loadDashboardData();
+    };
+    
+    // Refresh data when navigating to dashboard
+    const handleRouteChange = (url) => {
+      if (url === '/dashboard') {
+        loadDashboardData();
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    router.events.on('routeChangeComplete', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);

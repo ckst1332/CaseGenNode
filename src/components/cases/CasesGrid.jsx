@@ -46,7 +46,7 @@ export default function CasesGrid({ cases }) {
                         {format(new Date(case_item.created_date), "MMM d, yyyy")}
                     </span>
                 </div>
-                <Link href={createPageUrl(`Case?id=${case_item.id}`)}>
+                <Link href={`/case?id=${case_item.id}`}>
                   <Button className="w-full">
                     View Case <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>

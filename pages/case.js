@@ -97,6 +97,21 @@ export default function CaseDetail() {
     }
   }, [session, status, router, id]);
 
+  // Refresh case data when navigating back to this page
+  useEffect(() => {
+    const handleRouteChange = (url) => {
+      if (url.startsWith('/case?') && id) {
+        loadCase();
+      }
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [id, router]);
+
   const loadCase = async () => {
     setIsLoading(true);
     try {

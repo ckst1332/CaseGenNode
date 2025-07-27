@@ -48,7 +48,7 @@ export default function CasesTable({ cases }) {
                 </TableCell>
                 <TableCell>{format(new Date(case_item.created_date), "MMM d, yyyy")}</TableCell>
                 <TableCell>
-                  <Link href={createPageUrl(`Case?id=${case_item.id}`)}>
+                  <Link href={`/case?id=${case_item.id}`}>
                     <Button variant="outline" size="sm">
                         View <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
