@@ -3,30 +3,45 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
-      <form
-        action="/signup"
-        method="POST"
-        className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow"
-      >
+      <form className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow">
         <h1 className="text-2xl font-bold text-center">Sign Up</h1>
         <p className="text-sm text-center text-slate-600">
           Create your account or continue with Google.
         </p>
         <div className="text-center">
-          <a href="/auth/google" className="inline-block w-full mb-4">
-            <Button type="button" variant="outline" className="w-full">
+          {session ? (
+            <>
+              <p className="mb-2">Signed in as {session.user.name}</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full mb-4"
+                onClick={() => signOut()}
+              >
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mb-4"
+              onClick={() => signIn("google")}
+            >
               Continue with Google
             </Button>
-          </a>
+          )}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="email">
