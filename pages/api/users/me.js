@@ -75,14 +75,22 @@ export default async function handler(req, res) {
       // Update user data
       let user = storage.getUser(userId);
       if (!user) {
+        console.log(`User not found for PATCH: ${userId}`);
         return res.status(404).json({ error: "User not found" });
       }
       
       const updates = req.body;
+      console.log(`PATCH request for user ${userId}:`, {
+        currentCredits: user.credits_remaining,
+        updates: updates,
+        userTier: user.subscription_tier
+      });
       
       // Special handling for credit deduction
       if (updates.credits_remaining !== undefined) {
         const creditDifference = user.credits_remaining - updates.credits_remaining;
+        console.log(`Credit update: ${user.credits_remaining} -> ${updates.credits_remaining} (difference: ${creditDifference})`);
+        
         if (creditDifference > 0) {
           // Credits were used
           updates.credits_used_this_month = (user.credits_used_this_month || 0) + creditDifference;
@@ -93,6 +101,7 @@ export default async function handler(req, res) {
       
       // Special handling for subscription tier changes
       if (updates.subscription_tier && updates.subscription_tier !== user.subscription_tier) {
+        console.log(`Subscription change: ${user.subscription_tier} -> ${updates.subscription_tier}`);
         // Reset credits when subscription changes
         updates.credits_remaining = DEFAULT_CREDITS[updates.subscription_tier] || DEFAULT_CREDITS.free;
         updates.credits_used_this_month = 0;
@@ -102,6 +111,12 @@ export default async function handler(req, res) {
       // Update user with new data
       const updatedUser = { ...user, ...updates };
       storage.saveUser(userId, updatedUser);
+      
+      console.log(`Updated user:`, {
+        credits_remaining: updatedUser.credits_remaining,
+        credits_used_this_month: updatedUser.credits_used_this_month,
+        subscription_tier: updatedUser.subscription_tier
+      });
       
       return res.status(200).json(updatedUser);
     }

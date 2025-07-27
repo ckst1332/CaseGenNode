@@ -188,10 +188,15 @@ export default function Generate() {
   const loadUser = async () => {
     try {
       const userData = await User.me();
+      console.log('User data loaded:', userData);
       setUser(userData);
     } catch (error) {
       console.error("Error loading user:", error);
     }
+  };
+
+  const handleRefreshCredits = async () => {
+    await loadUser();
   };
 
   const handleGenerateClick = () => {
@@ -252,8 +257,14 @@ export default function Generate() {
         answer_key_excel: null,
       });
 
-      // Decrement user credits
-      await User.updateMyUserData({ credits_remaining: (user.credits_remaining || 0) - 1 });
+      // Decrement user credits and refresh user data
+      const updatedUserData = await User.updateMyUserData({ 
+        credits_remaining: (user.credits_remaining || 0) - 1 
+      });
+      console.log('Credits updated:', updatedUserData);
+      
+      // Update local user state with new credit count
+      setUser(updatedUserData);
 
       // Step 4: Navigate to case
       setGenerationStep(4); 
@@ -399,18 +410,28 @@ export default function Generate() {
                     }`}>{user.credits_remaining || 0}</span>
                   </p>
                   <p className="text-xs text-slate-600 mt-1">
-                    Used this month: {user.credits_used_this_month || 0}
+                    Used this month: {user.credits_used_this_month || 0} | Plan: {user.subscription_tier || 'free'}
                   </p>
                 </div>
-                {(user.credits_remaining || 0) === 0 && (
+                <div className="flex gap-2">
                   <Button 
-                    onClick={() => router.push('/payments')} 
+                    onClick={handleRefreshCredits}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
+                    variant="outline"
+                    className="text-xs"
                   >
-                    Upgrade Plan
+                    ↻ Refresh
                   </Button>
-                )}
+                  {(user.credits_remaining || 0) === 0 && (
+                    <Button 
+                      onClick={() => router.push('/payments')} 
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Upgrade Plan
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}
