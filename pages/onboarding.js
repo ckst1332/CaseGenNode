@@ -80,7 +80,7 @@ function FirstCaseStep({ userData }) {
     <div className="text-center space-y-4">
       <h2 className="text-2xl font-bold">Your Case Study is Ready!</h2>
       <p className="text-gray-600">Goal: {userData.goal || '-'}, Level: {userData.experience || '-'}</p>
-      <button className="bg-blue-600 text-white px-6 py-3 rounded" onClick={() => router.push('/Dashboard')}>
+      <button className="bg-blue-600 text-white px-6 py-3 rounded" onClick={() => router.push('/dashboard')}>
         Go to Dashboard
       </button>
     </div>
