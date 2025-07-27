@@ -65,25 +65,63 @@ export default async function handler(req, res) {
     console.log('User ID:', userId, 'Email:', userEmail);
     
     if (req.method === 'GET') {
-      // Always check if test user first - return unlimited credits immediately
+      // Always check if test user first - ensure they exist in DB
       if (isTestUser(userEmail)) {
-        const now = new Date();
-        const user = {
-          id: userId,
-          email: userEmail,
-          full_name: session.user.name,
-          subscription_tier: 'test',
-          credits_remaining: DEFAULT_CREDITS.test,
-          credits_used_this_month: 0,
-          total_cases_generated: 0,
-          created_at: now.toISOString(),
-          last_case_date: null,
-          last_credit_reset: now.toISOString(),
-          is_test_user: true
-        };
-        
-        console.log('🎯 TEST USER DETECTED (bypassing DB):', userEmail, 'Credits:', user.credits_remaining);
-        return res.status(200).json(user);
+        try {
+          let user = await supabaseStorage.getUser(userId);
+          
+          if (!user) {
+            // Create test user in database
+            const now = new Date();
+            const newUser = {
+              id: userId,
+              email: userEmail,
+              full_name: session.user.name,
+              subscription_tier: 'test',
+              credits_remaining: DEFAULT_CREDITS.test,
+              credits_used_this_month: 0,
+              total_cases_generated: 0,
+              created_at: now.toISOString(),
+              last_case_date: null,
+              last_credit_reset: now.toISOString(),
+              is_test_user: true
+            };
+            
+            user = await supabaseStorage.saveUser(userId, newUser);
+            console.log('🎯 TEST USER CREATED IN DB:', userEmail);
+          } else {
+            // Ensure test user always has unlimited credits
+            if (user.credits_remaining < DEFAULT_CREDITS.test) {
+              user.credits_remaining = DEFAULT_CREDITS.test;
+              user.subscription_tier = 'test';
+              user.is_test_user = true;
+              user = await supabaseStorage.saveUser(userId, user);
+              console.log('🎯 TEST USER CREDITS RESTORED:', userEmail);
+            }
+          }
+          
+          console.log('🎯 TEST USER LOADED:', userEmail, 'Credits:', user.credits_remaining);
+          return res.status(200).json(user);
+        } catch (dbError) {
+          console.error('Error handling test user:', dbError);
+          // Fallback to memory for this request
+          const now = new Date();
+          const fallbackUser = {
+            id: userId,
+            email: userEmail,
+            full_name: session.user.name,
+            subscription_tier: 'test',
+            credits_remaining: DEFAULT_CREDITS.test,
+            credits_used_this_month: 0,
+            total_cases_generated: 0,
+            created_at: now.toISOString(),
+            last_case_date: null,
+            last_credit_reset: now.toISOString(),
+            is_test_user: true
+          };
+          
+          return res.status(200).json(fallbackUser);
+        }
       }
       
       // Regular user - get from Supabase
@@ -143,25 +181,44 @@ export default async function handler(req, res) {
     }
     
     if (req.method === 'PATCH') {
-      // Always return test user unlimited credits (bypass DB)
+      // Test user - still maintain unlimited credits but use DB
       if (isTestUser(userEmail)) {
-        const now = new Date();
-        const user = {
-          id: userId,
-          email: userEmail,
-          full_name: session.user.name,
-          subscription_tier: 'test',
-          credits_remaining: DEFAULT_CREDITS.test,
-          credits_used_this_month: 0,
-          total_cases_generated: 0,
-          created_at: now.toISOString(),
-          last_case_date: null,
-          last_credit_reset: now.toISOString(),
-          is_test_user: true
-        };
-        
-        console.log('🎯 TEST USER PATCH (bypassing DB):', userEmail, 'Unlimited credits maintained');
-        return res.status(200).json(user);
+        try {
+          let user = await supabaseStorage.getUser(userId);
+          
+          if (!user) {
+            // Create test user if they don't exist
+            const now = new Date();
+            const newUser = {
+              id: userId,
+              email: userEmail,
+              full_name: session.user.name,
+              subscription_tier: 'test',
+              credits_remaining: DEFAULT_CREDITS.test,
+              credits_used_this_month: 0,
+              total_cases_generated: 0,
+              created_at: now.toISOString(),
+              last_case_date: null,
+              last_credit_reset: now.toISOString(),
+              is_test_user: true
+            };
+            
+            user = await supabaseStorage.saveUser(userId, newUser);
+            console.log('🎯 TEST USER CREATED IN DB (PATCH):', userEmail);
+          } else {
+            // Test users always maintain unlimited credits regardless of updates
+            user.credits_remaining = DEFAULT_CREDITS.test;
+            user.subscription_tier = 'test';
+            user.is_test_user = true;
+            user = await supabaseStorage.saveUser(userId, user);
+          }
+          
+          console.log('🎯 TEST USER PATCH COMPLETED:', userEmail, 'Credits maintained at unlimited');
+          return res.status(200).json(user);
+        } catch (dbError) {
+          console.error('Error handling test user PATCH:', dbError);
+          return res.status(500).json({ error: "Database error", details: dbError.message });
+        }
       }
       
       // Regular user update via Supabase

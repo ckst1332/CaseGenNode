@@ -45,13 +45,15 @@ export default async function handler(req, res) {
         const newCase = {
           id: caseId,
           user_id: userId,
-          title: caseData.name,
+          name: caseData.name,
+          type: caseData.type || 'DCF',
+          status: caseData.status || 'template',
           industry: caseData.industry || 'Technology',
-          content: caseData,
-          scenario: caseData.scenario || null,
-          calculations: caseData.calculations || null,
+          company_description: caseData.company_description || null,
+          starting_point: caseData.starting_point || null,
           assumptions: caseData.assumptions || null,
           answer_key: caseData.answer_key || null,
+          user_results: caseData.user_results || null,
           answer_key_excel: caseData.answer_key_excel || null,
           created_at: new Date().toISOString()
         };
