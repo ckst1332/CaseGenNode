@@ -45,7 +45,7 @@ export default async function handler(req, res) {
         const newCase = {
           id: caseId,
           user_id: userId,
-          title: caseData.name, // Keep old field for backwards compatibility
+          // New schema fields
           name: caseData.name,
           type: caseData.type || 'DCF',
           status: caseData.status || 'template',
@@ -56,6 +56,21 @@ export default async function handler(req, res) {
           answer_key: caseData.answer_key || null,
           user_results: caseData.user_results || null,
           answer_key_excel: caseData.answer_key_excel || null,
+          // Old schema fields for backwards compatibility - provide safe defaults
+          title: caseData.name,
+          content: {
+            name: caseData.name,
+            type: caseData.type || 'DCF',
+            status: caseData.status || 'template',
+            company_description: caseData.company_description,
+            starting_point: caseData.starting_point,
+            assumptions: caseData.assumptions,
+            answer_key: caseData.answer_key,
+            user_results: caseData.user_results,
+            ...caseData
+          },
+          scenario: caseData.starting_point || {},
+          calculations: caseData.answer_key || {},
           created_at: new Date().toISOString()
         };
         
