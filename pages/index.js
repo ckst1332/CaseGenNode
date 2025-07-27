@@ -8,7 +8,7 @@ export default function IndexPage() {
   const { data: session, status } = useSession();
   
   useEffect(() => {
-    if (status === 'authenticated' && session) {
+    if (status === 'authenticated' && session && router.pathname === '/') {
       router.replace('/dashboard');
     }
   }, [session, status, router]);
