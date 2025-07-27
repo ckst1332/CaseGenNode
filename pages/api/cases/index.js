@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     }
 
     const userId = session.user.id || session.user.email;
+    console.log('Cases API - User ID:', userId, 'Email:', session.user.email);
     
     if (req.method === 'GET') {
       // List user's cases
@@ -39,6 +40,17 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       // Create new case
       try {
+        // First verify the user exists in the database to prevent foreign key constraint violation
+        const existingUser = await supabaseStorage.getUser(userId);
+        if (!existingUser) {
+          console.error('User not found in database:', userId);
+          return res.status(400).json({ 
+            error: "User not found", 
+            details: `User ${userId} does not exist in database. Please refresh and try again.` 
+          });
+        }
+        console.log('User verified for case creation:', existingUser.id, existingUser.email);
+        
         const caseData = req.body;
         const caseId = `case_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         

@@ -666,6 +666,21 @@ export default function Generate() {
     const industry = selectedIndustry;
 
     try {
+      // Step 0: Ensure user exists in database (critical for foreign key constraint)
+      console.log('Ensuring user exists in database...');
+      const userData = await User.me();
+      console.log('User verified in database:', userData.id, userData.email);
+      
+      // Validate user has proper credits before proceeding
+      if (!userData || userData.credits_remaining <= 0) {
+        throw new Error('User validation failed or insufficient credits');
+      }
+      
+      setUser(userData); // Update user state with confirmed database user
+      
+      // Small delay to ensure database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Step 1: Generate company scenario
       setGenerationStep(1);
       const caseGen = getCasePrompt(industry);
