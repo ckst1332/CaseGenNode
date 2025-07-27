@@ -101,7 +101,17 @@ export default function RecentCases({ cases, isLoading, onRefresh }) {
                       </Badge>
                     </div>
                     <p className="text-sm text-slate-600">
-                      {case_item.industry} • {format(new Date(case_item.created_date), "MMM d, yyyy")}
+                      {case_item.industry} • {(() => {
+                        try {
+                          const dateValue = case_item.created_at || case_item.created_date;
+                          if (!dateValue) return 'Recently';
+                          const date = new Date(dateValue);
+                          if (isNaN(date.getTime())) return 'Recently';
+                          return format(date, "MMM d, yyyy");
+                        } catch {
+                          return 'Recently';
+                        }
+                      })()}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
