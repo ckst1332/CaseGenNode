@@ -48,6 +48,17 @@ app.use(passport.session());
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
+// Handle form submissions from the login and signup pages by redirecting
+// the user into the Google OAuth flow. These forms do not process local
+// credentials; Google is the only authentication method.
+app.post('/login', (req, res) => {
+  res.redirect('/auth/google');
+});
+
+app.post('/signup', (req, res) => {
+  res.redirect('/auth/google');
+});
+
 app.get(
   '/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login' }),
