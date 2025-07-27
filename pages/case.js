@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { safeDate } from '../lib/utils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -194,7 +195,7 @@ export default function CaseDetail() {
                 </Badge>
                 <span className="text-slate-600">{caseData.industry}</span>
                 <span className="text-slate-600">
-                  Created {new Date(caseData.created_date).toLocaleDateString()}
+                  Created {safeDate(caseData.created_date, 'Recently')}
                 </span>
               </div>
             </div>
@@ -352,7 +353,7 @@ export default function CaseDetail() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-slate-600">Created</span>
                   <span className="font-semibold text-slate-900">
-                    {new Date(caseData.created_date).toLocaleDateString()}
+                    {safeDate(caseData.created_date, 'Recently')}
                   </span>
                 </div>
                 

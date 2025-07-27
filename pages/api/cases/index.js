@@ -20,7 +20,13 @@ export default async function handler(req, res) {
         // Sort by created_date if order parameter is provided
         const order = req.query.order;
         if (order === '-created_date') {
-          userCasesList.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          userCasesList.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+            const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+            // Return 0 if either date is invalid
+            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
+            return dateB - dateA;
+          });
         }
         
         return res.status(200).json(userCasesList);
