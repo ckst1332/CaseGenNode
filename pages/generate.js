@@ -743,6 +743,7 @@ export default function Generate() {
       });
       
       console.log('Case created successfully:', newCase.id);
+      console.log('Full case object:', newCase);
 
       // Decrement user credits and refresh user data
       const updatedUserData = await User.updateMyUserData({ 
@@ -755,9 +756,12 @@ export default function Generate() {
 
       // Step 4: Navigate to case
       setGenerationStep(4); 
+      console.log('Navigating to case with ID:', newCase.id);
+      console.log('Navigation URL will be:', `/case?id=${newCase.id}`);
+      
       setTimeout(() => {
         router.push(`/case?id=${newCase.id}`);
-      }, 2000); // Increased timeout to ensure user sees completion
+      }, 3000); // Increased timeout to ensure database commit
 
     } catch (err) {
       console.error("Error generating case:", err);
