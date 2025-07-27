@@ -94,14 +94,12 @@ export default async function handler(req, res) {
             user = await supabaseStorage.saveUser(userId, newUser);
             console.log('🎯 TEST USER CREATED IN DB:', userEmail, 'User ID:', userId);
           } else {
-            // Ensure test user always has unlimited credits
-            if (user.credits_remaining < DEFAULT_CREDITS.test) {
-              user.credits_remaining = DEFAULT_CREDITS.test;
-              user.subscription_tier = 'test';
-              user.is_test_user = true;
-              user = await supabaseStorage.saveUser(userId, user);
-              console.log('🎯 TEST USER CREDITS RESTORED:', userEmail);
-            }
+            // ALWAYS ensure test user has unlimited credits (force reset every time)
+            user.credits_remaining = DEFAULT_CREDITS.test;
+            user.subscription_tier = 'test';
+            user.is_test_user = true;
+            user = await supabaseStorage.saveUser(userId, user);
+            console.log('🎯 TEST USER CREDITS FORCED TO UNLIMITED:', userEmail, 'Credits:', user.credits_remaining);
           }
           
           console.log('🎯 TEST USER LOADED:', userEmail, 'Credits:', user.credits_remaining);
@@ -204,10 +202,11 @@ export default async function handler(req, res) {
             user = await supabaseStorage.saveUser(userId, newUser);
             console.log('🎯 TEST USER CREATED IN DB (PATCH):', userEmail);
           } else {
-            // Test users always maintain unlimited credits regardless of updates
+            // Test users ALWAYS maintain unlimited credits regardless of any updates
             user.credits_remaining = DEFAULT_CREDITS.test;
             user.subscription_tier = 'test';
             user.is_test_user = true;
+            user.credits_used_this_month = 0; // Reset usage too
             user = await supabaseStorage.saveUser(userId, user);
           }
           
