@@ -195,7 +195,7 @@ export default function CaseDetail() {
                 </Badge>
                 <span className="text-slate-600">{caseData.industry}</span>
                 <span className="text-slate-600">
-                  Created {safeDate(caseData.created_date, 'Recently')}
+                  Created {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
                 </span>
               </div>
             </div>
@@ -353,7 +353,7 @@ export default function CaseDetail() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-slate-600">Created</span>
                   <span className="font-semibold text-slate-900">
-                    {safeDate(caseData.created_date, 'Recently')}
+                    {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
                   </span>
                 </div>
                 

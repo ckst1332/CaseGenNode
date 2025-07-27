@@ -181,7 +181,7 @@ export default function Account() {
               <div>
                 <label className="text-sm font-medium text-slate-600">Member Since</label>
                 <p className="text-slate-900 font-medium">
-                  {safeDate(user?.created_date, 'Recently')}
+                  {safeDate(user?.created_at || user?.created_date, 'Recently')}
                 </p>
               </div>
             </CardContent>
