@@ -3,34 +3,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, CheckCircle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function DashboardStats({ totalCases, completedCases, inProgressCases, isLoading }) {
+function DashboardStats({ totalCases, completedCases, inProgressCases, isLoading }) {
   const stats = [
     {
       title: "Total Cases",
       value: totalCases,
       icon: FileText,
       color: "text-blue-600",
-      bgColor: "bg-blue-50"
+      bgColor: "bg-blue-50",
     },
     {
       title: "Completed Cases",
       value: completedCases,
       icon: CheckCircle,
       color: "text-green-600",
-      bgColor: "bg-green-50"
+      bgColor: "bg-green-50",
     },
     {
       title: "In Progress",
       value: inProgressCases,
       icon: Clock,
       color: "text-purple-600",
-      bgColor: "bg-purple-50"
-    }
+      bgColor: "bg-purple-50",
+    },
   ];
 
   return (
     <div className="grid md:grid-cols-3 gap-6">
-      {stats.map((stat, index) => (
+      {stats.map((stat) => (
         <Card key={stat.title} className="border-0 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
@@ -45,12 +45,8 @@ export default function DashboardStats({ totalCases, completedCases, inProgressC
                   </div>
                 ) : (
                   <div>
-                    <div className="text-2xl font-bold text-slate-900">
-                      {stat.value}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      {stat.title}
-                    </div>
+                    <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                    <div className="text-sm text-slate-600">{stat.title}</div>
                   </div>
                 )}
               </div>
@@ -61,3 +57,5 @@ export default function DashboardStats({ totalCases, completedCases, inProgressC
     </div>
   );
 }
+
+export default React.memo(DashboardStats);

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import format from "date-fns/format";
 import { Clock, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function CaseHeader({ caseData }) {
+function CaseHeader({ caseData }) {
   const getStatusConfig = (status) => {
     const configs = {
       generating: {
@@ -24,8 +24,8 @@ export default function CaseHeader({ caseData }) {
     };
     return configs[status] || configs.generating;
   };
-  
-  const statusConfig = getStatusConfig(caseData.status);
+
+  const statusConfig = useMemo(() => getStatusConfig(caseData.status), [caseData.status]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-slate-200">
@@ -49,3 +49,5 @@ export default function CaseHeader({ caseData }) {
     </div>
   );
 }
+
+export default React.memo(CaseHeader);
