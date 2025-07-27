@@ -16,7 +16,7 @@ export const authOptions = {
 
   callbacks: {
     async redirect({ url, baseUrl }) {
-      return `${baseUrl}/`;
+      return `${baseUrl}/dashboard`;
     },
 
     async jwt({ token, account, profile }) {

@@ -64,7 +64,7 @@ function PagesContent() {
                     <Route path="/" element={<Landing />} />
                 
                 
-                <Route path="/Dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 
                 <Route path="/Generate" element={<Generate />} />
                 
