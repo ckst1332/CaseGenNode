@@ -57,7 +57,7 @@ export default function Pricing() {
     }
 
     if (plan.name === 'Free') {
-      router.push('/dashboard');
+      router.push('/Dashboard');
     } else if (plan.name === 'Pro') {
       alert('Pro subscription coming soon!');
     } else {
@@ -78,7 +78,7 @@ export default function Pricing() {
           <div className="flex gap-4">
             {session ? (
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/Dashboard')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
               >
                 Dashboard

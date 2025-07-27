@@ -5,7 +5,7 @@ export default function Signup() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/dashboard');
+    router.replace('/Dashboard');
   }, [router]);
 
   return null;
@@ -14,7 +14,7 @@ export default function Signup() {
 export async function getServerSideProps() {
   return {
     redirect: {
-      destination: '/dashboard',
+      destination: '/Dashboard',
       permanent: false,
     },
   };
