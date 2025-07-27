@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { storage } from "../../../lib/storage";
+import { supabaseStorage } from "../../../lib/supabase";
 
 export default async function handler(req, res) {
   try {
@@ -12,23 +12,37 @@ export default async function handler(req, res) {
 
     const userId = session.user.id || session.user.email;
     
-    // Get user data
-    const user = storage.getUser(userId);
-    
-    // Debug info
-    const debugInfo = {
-      session: {
-        user: session.user,
-        userId: userId
-      },
-      storedUser: user,
-      isTestUserEmail: session.user.email === 'jeff.sit13@gmail.com',
-      storageTest: {
-        canRead: true,
-        allUsers: Object.keys(storage.getUsers()),
-        userFound: !!user
-      }
-    };
+    // Get user data from Supabase
+    try {
+      const user = await supabaseStorage.getUser(userId);
+      
+      // Debug info
+      const debugInfo = {
+        session: {
+          user: session.user,
+          userId: userId
+        },
+        storedUser: user,
+        isTestUserEmail: session.user.email === 'jeff.sit13@gmail.com',
+        supabaseTest: {
+          canRead: true,
+          userFound: !!user,
+          userId: userId
+        }
+      };
+      
+      return res.status(200).json(debugInfo);
+    } catch (error) {
+      return res.status(500).json({
+        error: "Supabase error",
+        details: error.message,
+        session: {
+          user: session.user,
+          userId: userId
+        },
+        isTestUserEmail: session.user.email === 'jeff.sit13@gmail.com'
+      });
+    }
     
     return res.status(200).json(debugInfo);
   } catch (error) {

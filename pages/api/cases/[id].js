@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { storage } from "../../../lib/storage";
+import { supabaseStorage } from "../../../lib/supabase";
 
 export default async function handler(req, res) {
   try {
@@ -14,18 +14,23 @@ export default async function handler(req, res) {
     const userId = session.user.id || session.user.email;
     
     if (req.method === 'GET') {
-      const caseData = storage.getCase(id);
-      
-      if (!caseData) {
-        return res.status(404).json({ error: "Case not found" });
+      try {
+        const caseData = await supabaseStorage.getCase(id);
+        
+        if (!caseData) {
+          return res.status(404).json({ error: "Case not found" });
+        }
+        
+        // Check if user owns this case
+        if (caseData.user_id !== userId) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        
+        return res.status(200).json(caseData);
+      } catch (error) {
+        console.error('Error getting case from Supabase:', error);
+        return res.status(500).json({ error: "Failed to get case" });
       }
-      
-      // Check if user owns this case
-      if (caseData.user_id !== userId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      
-      return res.status(200).json(caseData);
     }
     
     return res.status(405).json({ error: "Method not allowed" });
