@@ -10,6 +10,18 @@ npm run dev      # start the Next.js frontend
 npm run server   # start backend
 ```
 
+### Google authentication
+
+Create a `.env` file with the following variables to enable logging in with Gmail:
+
+```
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+SESSION_SECRET=some-session-secret
+```
+
+Once configured, submitting the Login or Signup forms redirects through Google OAuth.
+
 ## Building the app
 
 ```bash
