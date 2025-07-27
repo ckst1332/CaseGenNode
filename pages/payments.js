@@ -178,8 +178,20 @@ export default function Payments() {
             const isCurrentPlan = user?.subscription_tier === plan.id;
             
             return (
-              <Card key={plan.id} className={`relative ${plan.popular ? 'border-blue-500 shadow-lg' : 'border-slate-200'}`}>
-                {plan.popular && (
+              <Card key={plan.id} className={`relative ${
+                isCurrentPlan 
+                  ? 'border-green-500 bg-green-50' 
+                  : plan.popular 
+                    ? 'border-blue-500 shadow-lg' 
+                    : 'border-slate-200'
+              }`}>
+                {isCurrentPlan && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-green-600 text-white px-3 py-1">Current Plan</Badge>
+                  </div>
+                )}
+                
+                {plan.popular && !isCurrentPlan && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <Badge className="bg-blue-600 text-white px-3 py-1">Most Popular</Badge>
                   </div>
@@ -187,23 +199,39 @@ export default function Payments() {
                 
                 <CardHeader className="text-center">
                   <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4 ${
-                    plan.id === 'pro' ? 'bg-yellow-100' :
-                    plan.id === 'basic' ? 'bg-blue-100' : 'bg-slate-100'
+                    isCurrentPlan
+                      ? 'bg-green-100'
+                      : plan.id === 'pro' 
+                        ? 'bg-yellow-100' 
+                        : plan.id === 'basic' 
+                          ? 'bg-blue-100' 
+                          : 'bg-slate-100'
                   }`}>
                     <PlanIcon className={`w-6 h-6 ${
-                      plan.id === 'pro' ? 'text-yellow-600' :
-                      plan.id === 'basic' ? 'text-blue-600' : 'text-slate-600'
+                      isCurrentPlan
+                        ? 'text-green-600'
+                        : plan.id === 'pro' 
+                          ? 'text-yellow-600' 
+                          : plan.id === 'basic' 
+                            ? 'text-blue-600' 
+                            : 'text-slate-600'
                     }`} />
                   </div>
                   
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
+                  <CardTitle className={`text-xl ${isCurrentPlan ? 'text-green-800' : ''}`}>
+                    {plan.name}
+                  </CardTitle>
                   
                   <div className="mt-4">
-                    <span className="text-3xl font-bold text-slate-900">${plan.price}</span>
-                    <span className="text-slate-600">/{plan.period}</span>
+                    <span className={`text-3xl font-bold ${isCurrentPlan ? 'text-green-800' : 'text-slate-900'}`}>
+                      ${plan.price}
+                    </span>
+                    <span className={`${isCurrentPlan ? 'text-green-600' : 'text-slate-600'}`}>
+                      /{plan.period}
+                    </span>
                   </div>
                   
-                  <p className="text-sm text-slate-600 mt-2">
+                  <p className={`text-sm mt-2 ${isCurrentPlan ? 'text-green-600' : 'text-slate-600'}`}>
                     {plan.credits === 999 ? 'Unlimited' : plan.credits} case{plan.credits !== 1 ? 's' : ''} per month
                   </p>
                 </CardHeader>
@@ -213,14 +241,16 @@ export default function Payments() {
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-slate-700">{feature}</span>
+                        <span className={`text-sm ${isCurrentPlan ? 'text-green-700' : 'text-slate-700'}`}>
+                          {feature}
+                        </span>
                       </li>
                     ))}
                   </ul>
                   
                   {isCurrentPlan ? (
-                    <Button disabled className="w-full" variant="outline">
-                      Current Plan
+                    <Button disabled className="w-full bg-green-100 text-green-800 border-green-300" variant="outline">
+                      ✓ Current Plan
                     </Button>
                   ) : (
                     <Button 

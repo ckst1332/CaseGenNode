@@ -9,6 +9,28 @@ const DEFAULT_CREDITS = {
   pro: 999 // Unlimited (999) cases for pro plan
 };
 
+// Helper function to check if we're in a new month
+const isNewMonth = (lastResetDate) => {
+  if (!lastResetDate) return true;
+  
+  const now = new Date();
+  const lastReset = new Date(lastResetDate);
+  
+  return now.getMonth() !== lastReset.getMonth() || 
+         now.getFullYear() !== lastReset.getFullYear();
+};
+
+// Helper function to reset monthly credits
+const resetMonthlyCredits = (user) => {
+  const now = new Date();
+  return {
+    ...user,
+    credits_remaining: DEFAULT_CREDITS[user.subscription_tier] || DEFAULT_CREDITS.free,
+    credits_used_this_month: 0,
+    last_credit_reset: now.toISOString()
+  };
+};
+
 export default async function handler(req, res) {
   try {
     const session = await getServerSession(req, res, authOptions);
@@ -23,18 +45,27 @@ export default async function handler(req, res) {
       // Get or create user
       let user = storage.getUser(userId);
       if (!user) {
-        // Create new user with default credits
+        // Create new user with default credits and proper tracking
+        const now = new Date();
         user = {
           id: userId,
           email: session.user.email,
           full_name: session.user.name,
           subscription_tier: 'free',
           credits_remaining: DEFAULT_CREDITS.free,
+          credits_used_this_month: 0,
           total_cases_generated: 0,
-          created_date: new Date().toISOString(),
-          last_case_date: null
+          created_date: now.toISOString(),
+          last_case_date: null,
+          last_credit_reset: now.toISOString()
         };
         storage.saveUser(userId, user);
+      } else {
+        // Check if we need to reset monthly credits
+        if (isNewMonth(user.last_credit_reset)) {
+          user = resetMonthlyCredits(user);
+          storage.saveUser(userId, user);
+        }
       }
       
       return res.status(200).json(user);
@@ -42,12 +73,31 @@ export default async function handler(req, res) {
     
     if (req.method === 'PATCH') {
       // Update user data
-      const user = storage.getUser(userId);
+      let user = storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
       
       const updates = req.body;
+      
+      // Special handling for credit deduction
+      if (updates.credits_remaining !== undefined) {
+        const creditDifference = user.credits_remaining - updates.credits_remaining;
+        if (creditDifference > 0) {
+          // Credits were used
+          updates.credits_used_this_month = (user.credits_used_this_month || 0) + creditDifference;
+          updates.total_cases_generated = (user.total_cases_generated || 0) + creditDifference;
+          updates.last_case_date = new Date().toISOString();
+        }
+      }
+      
+      // Special handling for subscription tier changes
+      if (updates.subscription_tier && updates.subscription_tier !== user.subscription_tier) {
+        // Reset credits when subscription changes
+        updates.credits_remaining = DEFAULT_CREDITS[updates.subscription_tier] || DEFAULT_CREDITS.free;
+        updates.credits_used_this_month = 0;
+        updates.last_credit_reset = new Date().toISOString();
+      }
       
       // Update user with new data
       const updatedUser = { ...user, ...updates };

@@ -388,10 +388,30 @@ export default function Generate() {
           </Card>
 
           {user && (
-            <div className="bg-slate-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-slate-600">
-                Credits remaining: <span className="font-semibold text-slate-900">{user.credits_remaining || 0}</span>
-              </p>
+            <div className={`rounded-xl p-4 mb-6 ${
+              (user.credits_remaining || 0) > 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">
+                    Credits remaining: <span className={`font-bold ${
+                      (user.credits_remaining || 0) > 0 ? 'text-green-700' : 'text-red-700'
+                    }`}>{user.credits_remaining || 0}</span>
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Used this month: {user.credits_used_this_month || 0}
+                  </p>
+                </div>
+                {(user.credits_remaining || 0) === 0 && (
+                  <Button 
+                    onClick={() => router.push('/payments')} 
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Upgrade Plan
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 

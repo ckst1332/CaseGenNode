@@ -93,11 +93,11 @@ export default function Account() {
 
   const getCreditsForPlan = (tier) => {
     const creditLimits = {
-      'free': 1,
-      'basic': 15,
+      'free': 3,
+      'basic': 50,
       'pro': 999
     };
-    return creditLimits[tier] || 1;
+    return creditLimits[tier] || 3;
   };
 
   const getTierDisplayName = (tier) => {
@@ -234,7 +234,7 @@ export default function Account() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-600">Cases Generated</span>
+                <span className="text-sm font-medium text-slate-600">Total Cases Generated</span>
                 <span className="font-semibold text-slate-900">
                   {user?.total_cases_generated || 0}
                 </span>
@@ -243,7 +243,16 @@ export default function Account() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-600">Credits Used This Month</span>
                 <span className="font-semibold text-slate-900">
-                  {(getCreditsForPlan(user?.subscription_tier) - (user?.credits_remaining || 0))}
+                  {user?.credits_used_this_month || 0} / {getCreditsForPlan(user?.subscription_tier)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-600">Credits Remaining</span>
+                <span className={`font-semibold ${
+                  (user?.credits_remaining || 0) > 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {user?.credits_remaining || 0}
                 </span>
               </div>
 
@@ -251,6 +260,13 @@ export default function Account() {
                 <span className="text-sm font-medium text-slate-600">Last Case Generated</span>
                 <span className="font-semibold text-slate-900">
                   {user?.last_case_date ? new Date(user.last_case_date).toLocaleDateString() : 'Never'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-600">Credits Reset</span>
+                <span className="font-semibold text-slate-900">
+                  {user?.last_credit_reset ? new Date(user.last_credit_reset).toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </CardContent>
