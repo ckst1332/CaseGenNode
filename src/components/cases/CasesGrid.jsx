@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 
@@ -46,7 +46,7 @@ export default function CasesGrid({ cases }) {
                         {format(new Date(case_item.created_date), "MMM d, yyyy")}
                     </span>
                 </div>
-                <Link to={createPageUrl(`Case?id=${case_item.id}`)}>
+                <Link href={`/case?id=${case_item.id}`}>
                   <Button className="w-full">
                     View Case <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>

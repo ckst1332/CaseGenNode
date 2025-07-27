@@ -1,31 +1,34 @@
-import dynamic from 'next/dynamic';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
+import Landing from '../src/pages/Landing';
 
-const App = dynamic(() => import('../src/App.jsx'), { ssr: false });
-
-export default function LandingPage() {
-  const { data: session, status } = useSession();
+export default function IndexPage() {
   const router = useRouter();
-
+  const { data: session, status } = useSession();
+  
   useEffect(() => {
-    if (session) {
-      router.push('/dashboard');
+    if (status === 'authenticated' && session && router.pathname === '/') {
+      router.replace('/dashboard');
     }
-  }, [session, router]);
+  }, [session, status, router]);
 
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (session) {
-    return null;
+  if (status === 'unauthenticated') {
+    return <Landing />;
   }
 
-  return <App />;
+  // If authenticated, show loading while redirecting
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  );
 }

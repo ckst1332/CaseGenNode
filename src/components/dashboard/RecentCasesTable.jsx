@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { createPageUrl } from "@/utils";
 import format from "date-fns/format";
 
@@ -23,7 +23,7 @@ function RecentCasesTable({ cases, isLoading }) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">Recent Cases</CardTitle>
-          <Link to={createPageUrl("Cases")}>
+          <Link href={createPageUrl("Cases")}>
             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
               View All
             </Button>
@@ -72,7 +72,7 @@ function RecentCasesTable({ cases, isLoading }) {
                       <Badge className={statusConfig.className}>{statusConfig.text}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Link to={createPageUrl(`Case?id=${caseItem.id}`)}>
+                      <Link href={`/case?id=${caseItem.id}`}>
                         <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                           {caseItem.status === 'completed' ? 'View' : 'Continue'}
                         </Button>

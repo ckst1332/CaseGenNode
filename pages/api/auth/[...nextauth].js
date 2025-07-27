@@ -16,6 +16,18 @@ export const authOptions = {
 
   callbacks: {
     async redirect({ url, baseUrl }) {
+      // If redirecting after login, go to dashboard
+      // Otherwise, allow the user to go where they intended
+      if (url === baseUrl || url === `${baseUrl}/`) {
+        return `${baseUrl}/dashboard`;
+      }
+      
+      // Allow redirects to the same domain
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      
+      // Default to dashboard for external URLs
       return `${baseUrl}/dashboard`;
     },
 
