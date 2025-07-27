@@ -227,7 +227,7 @@ export default function CaseDetail() {
             
             <div className="flex gap-3">
               <Button 
-                onClick={handleDownloadTemplate}
+                onClick={handleTemplateDownload}
                 disabled={downloadingTemplate}
                 variant="outline"
               >
@@ -361,7 +361,7 @@ export default function CaseDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button 
-                  onClick={handleDownloadTemplate}
+                  onClick={handleTemplateDownload}
                   disabled={downloadingTemplate}
                   className="w-full"
                   variant="outline"
