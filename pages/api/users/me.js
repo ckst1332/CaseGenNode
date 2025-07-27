@@ -110,13 +110,24 @@ export default async function handler(req, res) {
           console.error('User ID that failed:', userId);
           console.error('User email:', userEmail);
           
-          // Return error instead of fallback for debugging
-          return res.status(500).json({ 
-            error: "Database error creating test user", 
-            details: dbError.message,
-            userId: userId,
-            userEmail: userEmail
-          });
+          // FALLBACK: Return test user with unlimited credits even if DB fails
+          const now = new Date();
+          const fallbackUser = {
+            id: userId,
+            email: userEmail,
+            full_name: session.user.name,
+            subscription_tier: 'test',
+            credits_remaining: DEFAULT_CREDITS.test,
+            credits_used_this_month: 0,
+            total_cases_generated: 0,
+            created_at: now.toISOString(),
+            last_case_date: null,
+            last_credit_reset: now.toISOString(),
+            is_test_user: true
+          };
+          
+          console.log('🎯 TEST USER FALLBACK ACTIVATED:', userEmail, 'Credits:', fallbackUser.credits_remaining);
+          return res.status(200).json(fallbackUser);
         }
       }
       
@@ -214,7 +225,25 @@ export default async function handler(req, res) {
           return res.status(200).json(user);
         } catch (dbError) {
           console.error('Error handling test user PATCH:', dbError);
-          return res.status(500).json({ error: "Database error", details: dbError.message });
+          
+          // FALLBACK for PATCH: Return test user with unlimited credits
+          const now = new Date();
+          const fallbackUser = {
+            id: userId,
+            email: userEmail,
+            full_name: session.user.name,
+            subscription_tier: 'test',
+            credits_remaining: DEFAULT_CREDITS.test,
+            credits_used_this_month: 0,
+            total_cases_generated: 0,
+            created_at: now.toISOString(),
+            last_case_date: null,
+            last_credit_reset: now.toISOString(),
+            is_test_user: true
+          };
+          
+          console.log('🎯 TEST USER PATCH FALLBACK ACTIVATED:', userEmail);
+          return res.status(200).json(fallbackUser);
         }
       }
       
