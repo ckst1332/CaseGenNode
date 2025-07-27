@@ -62,7 +62,11 @@ export default async function handler(req, res) {
     const userId = session.user.id || session.user.email;
     const userEmail = session.user.email;
     
+    console.log('=== USERS API DEBUG ===');
+    console.log('Session user:', session.user);
     console.log('User ID:', userId, 'Email:', userEmail);
+    console.log('Is test user:', isTestUser(userEmail));
+    console.log('========================');
     
     if (req.method === 'GET') {
       // Always check if test user first - ensure they exist in DB
@@ -88,7 +92,7 @@ export default async function handler(req, res) {
             };
             
             user = await supabaseStorage.saveUser(userId, newUser);
-            console.log('🎯 TEST USER CREATED IN DB:', userEmail);
+            console.log('🎯 TEST USER CREATED IN DB:', userEmail, 'User ID:', userId);
           } else {
             // Ensure test user always has unlimited credits
             if (user.credits_remaining < DEFAULT_CREDITS.test) {
@@ -103,24 +107,18 @@ export default async function handler(req, res) {
           console.log('🎯 TEST USER LOADED:', userEmail, 'Credits:', user.credits_remaining);
           return res.status(200).json(user);
         } catch (dbError) {
-          console.error('Error handling test user:', dbError);
-          // Fallback to memory for this request
-          const now = new Date();
-          const fallbackUser = {
-            id: userId,
-            email: userEmail,
-            full_name: session.user.name,
-            subscription_tier: 'test',
-            credits_remaining: DEFAULT_CREDITS.test,
-            credits_used_this_month: 0,
-            total_cases_generated: 0,
-            created_at: now.toISOString(),
-            last_case_date: null,
-            last_credit_reset: now.toISOString(),
-            is_test_user: true
-          };
+          console.error('🚨 DATABASE ERROR handling test user:', dbError);
+          console.error('Error details:', dbError.message);
+          console.error('User ID that failed:', userId);
+          console.error('User email:', userEmail);
           
-          return res.status(200).json(fallbackUser);
+          // Return error instead of fallback for debugging
+          return res.status(500).json({ 
+            error: "Database error creating test user", 
+            details: dbError.message,
+            userId: userId,
+            userEmail: userEmail
+          });
         }
       }
       

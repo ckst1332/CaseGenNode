@@ -668,18 +668,32 @@ export default function Generate() {
     try {
       // Step 0: Ensure user exists in database (critical for foreign key constraint)
       console.log('Ensuring user exists in database...');
-      const userData = await User.me();
-      console.log('User verified in database:', userData.id, userData.email);
       
-      // Validate user has proper credits before proceeding
-      if (!userData || userData.credits_remaining <= 0) {
-        throw new Error('User validation failed or insufficient credits');
+      let userData;
+      try {
+        userData = await User.me();
+        console.log('User API response:', userData);
+      } catch (userError) {
+        console.error('Failed to create/get user:', userError);
+        throw new Error(`User creation failed: ${userError.message}`);
       }
       
+      // Validate user response
+      if (!userData || !userData.id) {
+        console.error('Invalid user data received:', userData);
+        throw new Error('User validation failed - invalid user data received');
+      }
+      
+      // Validate user has proper credits before proceeding (skip for test users)
+      if (userData.credits_remaining <= 0 && !userData.is_test_user) {
+        throw new Error('Insufficient credits remaining');
+      }
+      
+      console.log('User verified in database:', userData.id, userData.email, 'Credits:', userData.credits_remaining);
       setUser(userData); // Update user state with confirmed database user
       
       // Small delay to ensure database transaction is committed
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Step 1: Generate company scenario
       setGenerationStep(1);
