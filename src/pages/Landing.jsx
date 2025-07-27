@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from 'next/router';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,34 +13,27 @@ import {
   Zap,
   BarChart3
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
-import { User } from "@/api/entities";
 
 export default function Landing() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
+  const { data: session } = useSession();
 
   const handleStartFree = async () => {
     await signIn("google", { callbackUrl: "/onboarding" });
   };
 
   const handleLogin = async () => {
-    try {
-      const user = await User.me();
-      if (user) {
-        navigate(createPageUrl("Dashboard"));
-      } else {
-        navigate(createPageUrl("Login"));
-      }
-    } catch (e) {
-      navigate(createPageUrl("Login"));
+    if (session) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
     }
   };
 

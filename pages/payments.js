@@ -20,9 +20,10 @@ const pricingPlans = [
     name: 'Free',
     price: 0,
     period: 'month',
-    credits: 1,
+    credits: 3,
     features: [
-      '1 case generation per month',
+      '3 case generations per month',
+      'Technology (SaaS) industry only',
       'Basic DCF templates',
       'Standard support'
     ],
@@ -34,11 +35,11 @@ const pricingPlans = [
     name: 'Basic',
     price: 19,
     period: 'month',
-    credits: 15,
+    credits: 50,
     features: [
-      '15 case generations per month',
+      '50 case generations per month',
+      'All available industries',
       'Advanced DCF templates',
-      'Multiple industries',
       'Email support',
       'Solution downloads'
     ],
@@ -53,11 +54,11 @@ const pricingPlans = [
     credits: 999,
     features: [
       'Unlimited case generations',
+      'All industries + early access',
       'All template types',
       'Priority support',
       'Custom scenarios',
-      'Team collaboration',
-      'Advanced analytics'
+      'Team collaboration features'
     ],
     icon: Crown,
     popular: false
@@ -94,10 +95,31 @@ export default function Payments() {
     setIsLoading(false);
   };
 
-  const handleUpgrade = (planId) => {
-    // In a real app, this would integrate with Stripe or similar
-    console.log(`Upgrading to ${planId}`);
-    alert(`Upgrade to ${planId} plan - Integration with payment processor needed`);
+  const handleUpgrade = async (planId) => {
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId: planId,
+          planName: pricingPlans.find(p => p.id === planId)?.name
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.checkoutUrl) {
+        // Redirect to Stripe checkout (or mock checkout for demo)
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Error initiating payment:', error);
+      alert('Failed to initiate payment. Please try again.');
+    }
   };
 
   if (status === 'loading' || isLoading) {

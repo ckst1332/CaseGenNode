@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Zap, AlertCircle, Cpu, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Zap, AlertCircle, Cpu, Loader2, Building, Clock } from "lucide-react";
 import Layout from "../src/pages/Layout";
 import GenerationProgress from "../src/components/generate/GenerationProgress";
 import {
@@ -170,6 +172,7 @@ export default function Generate() {
   const [generationStep, setGenerationStep] = useState(0);
   const [error, setError] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedIndustry, setSelectedIndustry] = useState("");
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -192,6 +195,11 @@ export default function Generate() {
   };
 
   const handleGenerateClick = () => {
+    if (!selectedIndustry) {
+      setError("Please select an industry before generating a case study.");
+      return;
+    }
+    
     if (!user?.credits_remaining || user.credits_remaining <= 0) {
       setShowUpgradeModal(true);
       return;
@@ -202,7 +210,7 @@ export default function Generate() {
   const generateCase = async () => {
     setIsGenerating(true);
     setError(null);
-    const industry = "Technology (SaaS)";
+    const industry = selectedIndustry;
 
     try {
       // Step 1: Generate company scenario
@@ -291,10 +299,31 @@ export default function Generate() {
     );
   }
 
+  const industries = [
+    { 
+      id: "technology", 
+      name: "Technology (SaaS)", 
+      enabled: true,
+      description: "Software-as-a-Service companies with recurring revenue models"
+    },
+    { 
+      id: "infrastructure", 
+      name: "Infrastructure & Utilities", 
+      enabled: false,
+      description: "Coming soon - Infrastructure and utility companies"
+    },
+    { 
+      id: "industrials", 
+      name: "Industrials & Manufacturing", 
+      enabled: false,
+      description: "Coming soon - Industrial and manufacturing businesses"
+    }
+  ];
+
   return (
     <Layout currentPageName="Generate">
       <div className="h-full flex flex-col items-center justify-center text-center p-6">
-        <div className="bg-white p-10 rounded-2xl shadow-2xl border border-slate-200 max-w-lg">
+        <div className="bg-white p-10 rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full">
           <div className="mb-6">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
               <Cpu className="w-10 h-10 text-white" />
@@ -302,10 +331,10 @@ export default function Generate() {
           </div>
 
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
-            Generate New Case
+            Generate New Case Study
           </h1>
           <p className="text-slate-600 text-lg mb-8">
-            Create a new, realistic DCF modeling challenge for a SaaS company in seconds.
+            Create a realistic DCF modeling challenge with AI-generated scenarios and calculations.
           </p>
 
           {error && (
@@ -314,6 +343,49 @@ export default function Generate() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
+          {/* Industry Selection */}
+          <Card className="mb-6 text-left">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Select Industry
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {industries.map((industry) => (
+                <div key={industry.id} className="relative">
+                  <div 
+                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                      industry.enabled 
+                        ? selectedIndustry === industry.name
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-slate-200 hover:border-slate-300'
+                        : 'border-slate-100 bg-slate-50 cursor-not-allowed'
+                    }`}
+                    onClick={() => industry.enabled && setSelectedIndustry(industry.name)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className={`font-medium ${industry.enabled ? 'text-slate-900' : 'text-slate-400'}`}>
+                          {industry.name}
+                        </h4>
+                        <p className={`text-sm ${industry.enabled ? 'text-slate-600' : 'text-slate-400'}`}>
+                          {industry.description}
+                        </p>
+                      </div>
+                      {!industry.enabled && (
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-xs">Coming Soon</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
           {user && (
             <div className="bg-slate-50 rounded-xl p-4 mb-6">
@@ -325,8 +397,8 @@ export default function Generate() {
 
           <Button
             onClick={handleGenerateClick}
-            disabled={isGenerating}
-            className="w-full py-6 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            disabled={isGenerating || !selectedIndustry}
+            className="w-full py-6 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg disabled:opacity-50"
           >
             {isGenerating ? (
               <>

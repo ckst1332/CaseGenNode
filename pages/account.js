@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   User as UserIcon, 
   CreditCard, 
@@ -13,7 +14,8 @@ import {
   ArrowLeft,
   Crown,
   Zap,
-  Clock
+  Clock,
+  CheckCircle
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../src/pages/Layout";
@@ -85,6 +87,10 @@ export default function Account() {
     router.push("/payments");
   };
 
+  // Check for upgrade success message
+  const { upgraded, demo } = router.query;
+  const showUpgradeSuccess = upgraded && demo;
+
   const getCreditsForPlan = (tier) => {
     const creditLimits = {
       'free': 1,
@@ -142,6 +148,15 @@ export default function Account() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Account Settings</h1>
           <p className="text-slate-600">Manage your account preferences and subscription.</p>
+          
+          {showUpgradeSuccess && (
+            <Alert className="mt-4 border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                🎉 Successfully upgraded to {upgraded} plan! (Demo mode - no actual payment processed)
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
