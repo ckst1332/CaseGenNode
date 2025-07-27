@@ -11,7 +11,18 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query;
-    const userId = session.user.id || session.user.email;
+    let userId = session.user.id || session.user.email;
+    
+    // Check if user exists by this ID, if not try email (same logic as case creation)
+    let existingUser = await supabaseStorage.getUser(userId);
+    if (!existingUser && session.user.email) {
+      console.log('User not found by ID for retrieval, trying by email:', session.user.email);
+      existingUser = await supabaseStorage.getUser(session.user.email);
+      if (existingUser) {
+        console.log('Found user by email for retrieval, updating userId:', existingUser.id);
+        userId = existingUser.id;
+      }
+    }
     
     if (req.method === 'GET') {
       try {
