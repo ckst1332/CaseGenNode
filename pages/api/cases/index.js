@@ -44,12 +44,46 @@ export default async function handler(req, res) {
         const existingUser = await supabaseStorage.getUser(userId);
         if (!existingUser) {
           console.error('User not found in database:', userId);
-          return res.status(400).json({ 
-            error: "User not found", 
-            details: `User ${userId} does not exist in database. Please refresh and try again.` 
-          });
+          
+          // Check if this is the test user - if so, create them now
+          const TEST_USER_EMAIL = "jeff.sit13@gmail.com";
+          if (session.user.email === TEST_USER_EMAIL) {
+            console.log('Creating missing test user in database...');
+            try {
+              const now = new Date();
+              const testUser = {
+                id: userId,
+                email: session.user.email,
+                full_name: session.user.name,
+                subscription_tier: 'test',
+                credits_remaining: 999999,
+                credits_used_this_month: 0,
+                total_cases_generated: 0,
+                created_at: now.toISOString(),
+                last_case_date: null,
+                last_credit_reset: now.toISOString(),
+                is_test_user: true,
+                updated_at: now.toISOString()
+              };
+              
+              const createdUser = await supabaseStorage.saveUser(userId, testUser);
+              console.log('✅ Test user created in database for case creation:', createdUser.id);
+            } catch (createError) {
+              console.error('Failed to create test user:', createError);
+              return res.status(500).json({ 
+                error: "Failed to create test user", 
+                details: createError.message 
+              });
+            }
+          } else {
+            return res.status(400).json({ 
+              error: "User not found", 
+              details: `User ${userId} does not exist in database. Please refresh and try again.` 
+            });
+          }
+        } else {
+          console.log('User verified for case creation:', existingUser.id, existingUser.email);
         }
-        console.log('User verified for case creation:', existingUser.id, existingUser.email);
         
         const caseData = req.body;
         const caseId = `case_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
