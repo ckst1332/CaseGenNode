@@ -722,10 +722,18 @@ export default function Generate() {
 
       // Step 3: Create case
       setGenerationStep(3);
+      console.log('Creating case with data:', {
+        name: caseName,
+        type: "DCF",
+        status: "template",
+        industry: industry,
+        user: userData.id
+      });
+      
       const newCase = await Case.create({
         name: caseName,
         type: "DCF",
-        status: "completed", // Mark as completed since we have the full model
+        status: "template", // Start with template status for now
         industry: industry,
         company_description: scenarioResult.company_description,
         starting_point: scenarioResult.starting_point,
@@ -733,6 +741,8 @@ export default function Generate() {
         answer_key: calculationResult,
         answer_key_excel: null,
       });
+      
+      console.log('Case created successfully:', newCase.id);
 
       // Decrement user credits and refresh user data
       const updatedUserData = await User.updateMyUserData({ 
