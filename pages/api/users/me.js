@@ -9,6 +9,14 @@ const DEFAULT_CREDITS = {
   pro: 999 // Unlimited (999) cases for pro plan
 };
 
+// Test user with unlimited credits
+const TEST_USER_EMAIL = "jeff.sit13@gmail.com";
+
+// Helper function to check if user is test user
+const isTestUser = (email) => {
+  return email === TEST_USER_EMAIL;
+};
+
 // Helper function to check if we're in a new month
 const isNewMonth = (lastResetDate) => {
   if (!lastResetDate) return true;
