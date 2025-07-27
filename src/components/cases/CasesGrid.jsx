@@ -43,7 +43,17 @@ export default function CasesGrid({ cases }) {
                         {statusConfig.text}
                     </Badge>
                     <span className="text-xs text-slate-500">
-                        {format(new Date(case_item.created_date), "MMM d, yyyy")}
+                        {(() => {
+                        try {
+                          const dateValue = case_item.created_at || case_item.created_date;
+                          if (!dateValue) return 'Recently';
+                          const date = new Date(dateValue);
+                          if (isNaN(date.getTime())) return 'Recently';
+                          return format(date, "MMM d, yyyy");
+                        } catch {
+                          return 'Recently';
+                        }
+                      })()}
                     </span>
                 </div>
                 <Link href={`/case?id=${case_item.id}`}>

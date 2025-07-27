@@ -35,7 +35,17 @@ function CaseHeader({ caseData }) {
           <div className="flex items-center gap-3 mt-2 text-sm text-slate-600">
             <span>{caseData.industry}</span>
             <span className="text-slate-300">|</span>
-            <span>Created on {format(new Date(caseData.created_date), "MMMM d, yyyy")}</span>
+            <span>Created on {(() => {
+              try {
+                const dateValue = caseData.created_at || caseData.created_date;
+                if (!dateValue) return 'Recently';
+                const date = new Date(dateValue);
+                if (isNaN(date.getTime())) return 'Recently';
+                return format(date, "MMMM d, yyyy");
+              } catch {
+                return 'Recently';
+              }
+            })()}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">

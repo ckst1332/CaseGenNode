@@ -62,73 +62,28 @@ export default async function handler(req, res) {
     const userId = session.user.id || session.user.email;
     const userEmail = session.user.email;
     
-    console.log('=== USERS API DEBUG ===');
-    console.log('Session user:', session.user);
     console.log('User ID:', userId, 'Email:', userEmail);
-    console.log('Is test user:', isTestUser(userEmail));
-    console.log('========================');
     
     if (req.method === 'GET') {
-      // Always check if test user first - ensure they exist in DB
+      // Always check if test user first - return unlimited credits immediately
       if (isTestUser(userEmail)) {
-        try {
-          let user = await supabaseStorage.getUser(userId);
-          
-          if (!user) {
-            // Create test user in database
-            const now = new Date();
-            const newUser = {
-              id: userId,
-              email: userEmail,
-              full_name: session.user.name,
-              subscription_tier: 'test',
-              credits_remaining: DEFAULT_CREDITS.test,
-              credits_used_this_month: 0,
-              total_cases_generated: 0,
-              created_at: now.toISOString(),
-              last_case_date: null,
-              last_credit_reset: now.toISOString(),
-              is_test_user: true
-            };
-            
-            user = await supabaseStorage.saveUser(userId, newUser);
-            console.log('🎯 TEST USER CREATED IN DB:', userEmail, 'User ID:', userId);
-          } else {
-            // ALWAYS ensure test user has unlimited credits (force reset every time)
-            user.credits_remaining = DEFAULT_CREDITS.test;
-            user.subscription_tier = 'test';
-            user.is_test_user = true;
-            user = await supabaseStorage.saveUser(userId, user);
-            console.log('🎯 TEST USER CREDITS FORCED TO UNLIMITED:', userEmail, 'Credits:', user.credits_remaining);
-          }
-          
-          console.log('🎯 TEST USER LOADED:', userEmail, 'Credits:', user.credits_remaining);
-          return res.status(200).json(user);
-        } catch (dbError) {
-          console.error('🚨 DATABASE ERROR handling test user:', dbError);
-          console.error('Error details:', dbError.message);
-          console.error('User ID that failed:', userId);
-          console.error('User email:', userEmail);
-          
-          // FALLBACK: Return test user with unlimited credits even if DB fails
-          const now = new Date();
-          const fallbackUser = {
-            id: userId,
-            email: userEmail,
-            full_name: session.user.name,
-            subscription_tier: 'test',
-            credits_remaining: DEFAULT_CREDITS.test,
-            credits_used_this_month: 0,
-            total_cases_generated: 0,
-            created_at: now.toISOString(),
-            last_case_date: null,
-            last_credit_reset: now.toISOString(),
-            is_test_user: true
-          };
-          
-          console.log('🎯 TEST USER FALLBACK ACTIVATED:', userEmail, 'Credits:', fallbackUser.credits_remaining);
-          return res.status(200).json(fallbackUser);
-        }
+        const now = new Date();
+        const user = {
+          id: userId,
+          email: userEmail,
+          full_name: session.user.name,
+          subscription_tier: 'test',
+          credits_remaining: DEFAULT_CREDITS.test,
+          credits_used_this_month: 0,
+          total_cases_generated: 0,
+          created_at: now.toISOString(),
+          last_case_date: null,
+          last_credit_reset: now.toISOString(),
+          is_test_user: true
+        };
+        
+        console.log('🎯 TEST USER DETECTED (bypassing DB):', userEmail, 'Credits:', user.credits_remaining);
+        return res.status(200).json(user);
       }
       
       // Regular user - get from Supabase
@@ -188,63 +143,25 @@ export default async function handler(req, res) {
     }
     
     if (req.method === 'PATCH') {
-      // Test user - still maintain unlimited credits but use DB
+      // Always return test user unlimited credits (bypass DB)
       if (isTestUser(userEmail)) {
-        try {
-          let user = await supabaseStorage.getUser(userId);
-          
-          if (!user) {
-            // Create test user if they don't exist
-            const now = new Date();
-            const newUser = {
-              id: userId,
-              email: userEmail,
-              full_name: session.user.name,
-              subscription_tier: 'test',
-              credits_remaining: DEFAULT_CREDITS.test,
-              credits_used_this_month: 0,
-              total_cases_generated: 0,
-              created_at: now.toISOString(),
-              last_case_date: null,
-              last_credit_reset: now.toISOString(),
-              is_test_user: true
-            };
-            
-            user = await supabaseStorage.saveUser(userId, newUser);
-            console.log('🎯 TEST USER CREATED IN DB (PATCH):', userEmail);
-          } else {
-            // Test users ALWAYS maintain unlimited credits regardless of any updates
-            user.credits_remaining = DEFAULT_CREDITS.test;
-            user.subscription_tier = 'test';
-            user.is_test_user = true;
-            user.credits_used_this_month = 0; // Reset usage too
-            user = await supabaseStorage.saveUser(userId, user);
-          }
-          
-          console.log('🎯 TEST USER PATCH COMPLETED:', userEmail, 'Credits maintained at unlimited');
-          return res.status(200).json(user);
-        } catch (dbError) {
-          console.error('Error handling test user PATCH:', dbError);
-          
-          // FALLBACK for PATCH: Return test user with unlimited credits
-          const now = new Date();
-          const fallbackUser = {
-            id: userId,
-            email: userEmail,
-            full_name: session.user.name,
-            subscription_tier: 'test',
-            credits_remaining: DEFAULT_CREDITS.test,
-            credits_used_this_month: 0,
-            total_cases_generated: 0,
-            created_at: now.toISOString(),
-            last_case_date: null,
-            last_credit_reset: now.toISOString(),
-            is_test_user: true
-          };
-          
-          console.log('🎯 TEST USER PATCH FALLBACK ACTIVATED:', userEmail);
-          return res.status(200).json(fallbackUser);
-        }
+        const now = new Date();
+        const user = {
+          id: userId,
+          email: userEmail,
+          full_name: session.user.name,
+          subscription_tier: 'test',
+          credits_remaining: DEFAULT_CREDITS.test,
+          credits_used_this_month: 0,
+          total_cases_generated: 0,
+          created_at: now.toISOString(),
+          last_case_date: null,
+          last_credit_reset: now.toISOString(),
+          is_test_user: true
+        };
+        
+        console.log('🎯 TEST USER PATCH (bypassing DB):', userEmail, 'Unlimited credits maintained');
+        return res.status(200).json(user);
       }
       
       // Regular user update via Supabase

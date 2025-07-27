@@ -66,7 +66,17 @@ function RecentCasesTable({ cases, isLoading }) {
                     <TableCell className="font-medium">{caseItem.name}</TableCell>
                     <TableCell className="text-slate-600">{caseItem.industry}</TableCell>
                     <TableCell className="text-slate-600">
-                      {format(new Date(caseItem.created_date), "MMM d, yyyy")}
+                      {(() => {
+                        try {
+                          const dateValue = caseItem.created_at || caseItem.created_date;
+                          if (!dateValue) return 'Recently';
+                          const date = new Date(dateValue);
+                          if (isNaN(date.getTime())) return 'Recently';
+                          return format(date, "MMM d, yyyy");
+                        } catch {
+                          return 'Recently';
+                        }
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusConfig.className}>{statusConfig.text}</Badge>

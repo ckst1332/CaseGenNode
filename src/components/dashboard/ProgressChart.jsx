@@ -21,14 +21,21 @@ function ProgressChart({ cases, isLoading }) {
       });
     }
     cases.forEach((caseItem) => {
-      const caseDate = new Date(caseItem.created_date);
-      const caseMonth = startOfMonth(caseDate);
-      const monthData = months.find((m) => m.month.getTime() === caseMonth.getTime());
-      if (monthData) {
-        monthData.totalCases++;
-        if (caseItem.status === 'completed') {
-          monthData.completedCases++;
+      try {
+        const dateValue = caseItem.created_at || caseItem.created_date;
+        if (!dateValue) return;
+        const caseDate = new Date(dateValue);
+        if (isNaN(caseDate.getTime())) return;
+        const caseMonth = startOfMonth(caseDate);
+        const monthData = months.find((m) => m.month.getTime() === caseMonth.getTime());
+        if (monthData) {
+          monthData.totalCases++;
+          if (caseItem.status === 'completed') {
+            monthData.completedCases++;
+          }
         }
+      } catch (error) {
+        console.warn('Invalid date in ProgressChart:', caseItem, error);
       }
     });
     let totalAccumulated = 0;

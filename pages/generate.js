@@ -76,43 +76,181 @@ const getCasePrompt = (industry) => {
   const basePrompt = `
     You are a world-class financial modeling instructor creating a realistic SaaS DCF case study. Your output MUST be financially plausible and represent a typical growing SaaS business.
 
-    **Critical Reality Constraints:**
-    - Target IRR should be 15-25% (realistic for SaaS growth companies)
-    - Revenue growth should start high but moderate over time
-    - Gross margins should be 75-85% (typical for SaaS)
-    - Operating margins should improve over time but remain realistic
+    **CRITICAL REALITY CONSTRAINTS:**
+    - Target IRR should be 15-25% (realistic for SaaS growth companies, NOT 35%+)
+    - Revenue Growth: Start high but moderate over time (e.g., 40% Year 1, down to 15-20% by Year 5)
+    - Gross Margins: 75-85% (typical for SaaS)
+    - Operating Margins: Improve over time but remain realistic (15-25% by Year 5, NOT 50%+)
+    - Customer Growth: Sustainable (NOT 100%+ annually)
+    - WACC: Typically 8-12% for SaaS companies
+    - Terminal Growth Rate: 2-4% (long-term GDP growth)
 
-    **Required Output Structure:**
-    1. **Company Narrative:** Create a compelling SaaS company story
-    2. **Starting Point (Year 0 Baseline):** Provide current state metrics
-    3. **Growth Assumptions:** Explicit growth rates and operational assumptions
-    4. **Financial Parameters:** WACC, tax rate, terminal growth rate
+    **REQUIRED OUTPUT SECTIONS:**
 
-    Create a realistic ${industry} company scenario with all necessary financial parameters.
+    1. **Company Narrative:** 
+       - Create a compelling ${industry} SaaS company story that justifies the metrics
+       - Include competitive advantages, market position, and growth strategy
+       - Should explain why the financial projections are realistic
+
+    2. **Starting Point (Year 0 Baseline):**
+       - Current ARR (Annual Recurring Revenue)
+       - Current customer count
+       - Current ARPU (Average Revenue Per User)
+       - Current gross margin %
+       - Current operating expense levels (S&M, R&D, G&A as % of revenue)
+       - Current cash position
+       - Current PP&E (Property, Plant & Equipment) value
+
+    3. **Growth Assumptions (5-Year Operational Drivers):**
+       - Customer acquisition growth rates for each year
+       - Annual churn rates
+       - ARPU growth rates
+       - Sales & Marketing expense as % of revenue by year
+       - R&D expense as % of revenue by year
+       - General & Administrative expense as % of revenue by year
+
+    4. **Financial Parameters:**
+       - WACC (Weighted Average Cost of Capital)
+       - Tax rate
+       - Terminal growth rate
+       - CapEx as % of revenue by year
+       - Depreciation rate
+
+    **CRITICAL SANITY CHECK - Before finalizing your response, verify:**
+    ✓ Year 5 revenue is 3-5x Year 0 (NOT 10x+)
+    ✓ Operating margins reach 15-25% by Year 5 (NOT 50%+)
+    ✓ Customer growth is sustainable (decreasing growth rates over time)
+    ✓ IRR will likely be 15-25% based on these assumptions
+    ✓ All percentages are expressed as decimals (e.g., 15% = 0.15)
+
+    If any metric fails these checks, ADJUST your assumptions and recalculate until realistic.
+
+    Industry Focus: ${industry}
   `;
 
   const schema = {
     type: "object",
     properties: {
-      company_name: { type: "string" },
-      company_description: { type: "string" },
+      company_name: { 
+        type: "string",
+        description: "Realistic company name for the industry"
+      },
+      company_description: { 
+        type: "string",
+        description: "Detailed company narrative explaining the business model, competitive advantages, and growth strategy"
+      },
       starting_point: {
         type: "object",
+        description: "Year 0 baseline financial and operational metrics",
         properties: {
-          current_arr: { type: "number" },
-          current_customers: { type: "number" },
-          current_arpu: { type: "number" },
-          gross_margin_percent: { type: "number" }
+          current_arr: { 
+            type: "number", 
+            description: "Current Annual Recurring Revenue in dollars" 
+          },
+          current_customers: { 
+            type: "number", 
+            description: "Current number of paying customers" 
+          },
+          current_arpu: { 
+            type: "number", 
+            description: "Current Average Revenue Per User (annual)" 
+          },
+          gross_margin_percent: { 
+            type: "number", 
+            description: "Current gross margin as decimal (e.g., 0.80 for 80%)" 
+          },
+          current_opex_sm_percent: { 
+            type: "number", 
+            description: "Sales & Marketing expenses as % of revenue (decimal)" 
+          },
+          current_opex_rd_percent: { 
+            type: "number", 
+            description: "R&D expenses as % of revenue (decimal)" 
+          },
+          current_opex_ga_percent: { 
+            type: "number", 
+            description: "General & Administrative expenses as % of revenue (decimal)" 
+          },
+          current_cash: { 
+            type: "number", 
+            description: "Current cash balance" 
+          },
+          current_ppe: { 
+            type: "number", 
+            description: "Current Property, Plant & Equipment value" 
+          }
         }
       },
       assumptions: {
         type: "object",
+        description: "5-year growth assumptions and financial parameters",
         properties: {
-          growth_rate_year_1: { type: "number" },
-          growth_rate_year_2: { type: "number" },
-          growth_rate_year_3: { type: "number" },
-          churn_rate: { type: "number" },
-          wacc: { type: "number" }
+          operational_drivers: {
+            type: "object",
+            properties: {
+              customer_acquisition_growth: {
+                type: "array",
+                items: { type: "number" },
+                description: "Net new customers per year for 5 years (absolute numbers)"
+              },
+              churn_rates: {
+                type: "array",
+                items: { type: "number" },
+                description: "Annual customer churn rates for 5 years (as decimals)"
+              },
+              arpu_growth_rates: {
+                type: "array",
+                items: { type: "number" },
+                description: "ARPU growth rates for 5 years (as decimals)"
+              },
+              sm_expense_percent: {
+                type: "array",
+                items: { type: "number" },
+                description: "Sales & Marketing as % of revenue for 5 years (as decimals)"
+              },
+              rd_expense_percent: {
+                type: "array",
+                items: { type: "number" },
+                description: "R&D as % of revenue for 5 years (as decimals)"
+              },
+              ga_expense_percent: {
+                type: "array",
+                items: { type: "number" },
+                description: "G&A as % of revenue for 5 years (as decimals)"
+              }
+            }
+          },
+          financial_assumptions: {
+            type: "object",
+            properties: {
+              wacc: { 
+                type: "number", 
+                description: "Weighted Average Cost of Capital (as decimal, e.g., 0.10 for 10%)" 
+              },
+              terminal_growth_rate: { 
+                type: "number", 
+                description: "Long-term growth rate for terminal value (as decimal)" 
+              },
+              tax_rate: { 
+                type: "number", 
+                description: "Corporate tax rate (as decimal)" 
+              },
+              capex_percent_revenue: {
+                type: "array",
+                items: { type: "number" },
+                description: "CapEx as % of revenue for 5 years (as decimals)"
+              },
+              depreciation_rate: { 
+                type: "number", 
+                description: "Annual depreciation rate (as decimal)" 
+              },
+              projection_years: { 
+                type: "number", 
+                default: 5,
+                description: "Number of projection years" 
+              }
+            }
+          }
         }
       }
     }
@@ -123,41 +261,351 @@ const getCasePrompt = (industry) => {
 
 const generateFinancialModelPrompt = (caseData) => {
   const prompt = `
-    Based on the following company data, generate a complete 5-year DCF financial model:
-    
+    You are an elite financial modeling expert. Build a COMPLETE 5-year financial model with DCF valuation based on the following scenario. This must include Excel-like formulas for EVERY calculated line item for educational purposes.
+
+    **SCENARIO DATA:**
     Company: ${caseData.name}
     Description: ${caseData.company_description}
-    Starting ARR: ${caseData.starting_point?.current_arr}
     
-    Calculate projected financials for 5 years including:
-    - Revenue projections
-    - Operating expenses
-    - EBITDA
-    - Free cash flows
-    - Terminal value
-    - Enterprise value
-    - Equity value
+    **STARTING POINT (Year 0):**
+    ${JSON.stringify(caseData.starting_point, null, 2)}
+    
+    **GROWTH ASSUMPTIONS:**
+    ${JSON.stringify(caseData.assumptions, null, 2)}
+
+    **REQUIRED COMPLETE MODEL STRUCTURE:**
+
+    1. **Revenue Buildup Schedule** (5 years):
+       - Customer count progression (starting customers + new acquisitions - churn)
+       - ARPU progression 
+       - Revenue calculation (Customers × ARPU)
+       - Include formula for each calculated field
+
+    2. **Depreciation Schedule** (5 years):
+       - Beginning PP&E
+       - CapEx additions
+       - Depreciation expense
+       - Ending PP&E
+       - Include formula for each calculated field
+
+    3. **Debt Schedule** (if applicable):
+       - Beginning debt balance
+       - Principal payments
+       - Interest expense
+       - Ending debt balance
+
+    4. **Income Statement** (5 years):
+       - Revenue (from revenue buildup)
+       - Cost of Revenue (based on gross margin)
+       - Gross Profit
+       - Operating Expenses (S&M, R&D, G&A)
+       - EBITDA
+       - Depreciation
+       - EBIT
+       - Interest Expense
+       - EBT (Earnings Before Tax)
+       - Tax Expense
+       - Net Income
+       - Include formula for each calculated field
+
+    5. **Balance Sheet** (5 years):
+       - Assets: Cash, PP&E (net), Other Assets
+       - Liabilities: Debt, Other Liabilities  
+       - Equity: Retained Earnings progression
+       - Include formula for each calculated field
+
+    6. **Cash Flow Statement** (5 years):
+       - Net Income
+       - Add: Depreciation
+       - Change in Working Capital
+       - Operating Cash Flow
+       - CapEx
+       - Free Cash Flow
+       - Include formula for each calculated field
+
+    7. **DCF Valuation**:
+       - Unlevered Free Cash Flow calculation
+       - Present Value factors (using WACC)
+       - Present Value of each year's FCF
+       - Terminal Value calculation
+       - Present Value of Terminal Value
+       - Enterprise Value (sum of PVs)
+       - Equity Value (if debt exists)
+       - Include formula for each calculated field
+
+    **TWO-TIER VALIDATION PROCESS:**
+
+    **VP-LEVEL REVIEW - Check these metrics and adjust if needed:**
+    ✓ Revenue growth is sustainable (decreasing over time)
+    ✓ Gross margins remain consistent with SaaS business (75-85%)
+    ✓ Operating margins improve over time but stay realistic
+    ✓ Free cash flow turns positive by Year 3-5
+    ✓ Customer acquisition costs are sustainable
+    
+    If any red flags appear, revise operational assumptions and recalculate.
+
+    **MD-LEVEL FINAL VALIDATION - CRITICAL CHECKS:**
+    ✓ IRR Reality Check: Is IRR between 15-25% for SaaS? (NOT 35%+)
+    ✓ Valuation Multiple Check: Is EV/EBITDA reasonable (8-15x for mature SaaS)?
+    ✓ Growth vs. Profitability Trade-off: Does the model show realistic progression?
+    ✓ Tax Rate Check: Is tax correctly applied (EBIT × Tax Rate)?
+    ✓ Terminal Value Sanity: Is terminal growth rate 2-4%?
+    ✓ WACC Appropriateness: Is WACC 8-12% for SaaS?
+
+    **CRITICAL: If final metrics fail these checks, you MUST revise core assumptions and recalculate the entire model until all validation criteria are met.**
+
+    **FORMULA REQUIREMENTS:**
+    - Every calculated field must include an "Excel-like formula" explanation
+    - Use references like "B15*C20" style notation
+    - Explain the logic: "Revenue = Prior Year Revenue * (1 + Growth Rate)"
+    - This is for educational purposes so users can learn the methodology
+
+    **FINAL OUTPUT REQUIREMENTS:**
+    - NPV/Enterprise Value
+    - IRR (Internal Rate of Return) 
+    - All supporting schedules and statements
+    - Formula explanations for every calculation
+    - Summary metrics that pass MD-level validation
   `;
 
   const schema = {
     type: "object",
     properties: {
-      projections: {
+      revenue_buildup: {
         type: "array",
+        description: "5-year revenue buildup schedule",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            beginning_customers: { type: "number" },
+            new_customers: { type: "number" },
+            churned_customers: { type: "number" },
+            ending_customers: { type: "number" },
+            arpu: { type: "number" },
+            revenue: { type: "number" },
+            formula: {
+              type: "object",
+              description: "Excel-like formulas for each calculated field",
+              properties: {
+                new_customers_formula: { type: "string" },
+                churned_customers_formula: { type: "string" },
+                ending_customers_formula: { type: "string" },
+                arpu_formula: { type: "string" },
+                revenue_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      depreciation_schedule: {
+        type: "array",
+        description: "5-year depreciation schedule",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            beginning_ppe: { type: "number" },
+            capex: { type: "number" },
+            depreciation: { type: "number" },
+            ending_ppe: { type: "number" },
+            formula: {
+              type: "object",
+              description: "Excel-like formulas for each calculated field",
+              properties: {
+                capex_formula: { type: "string" },
+                depreciation_formula: { type: "string" },
+                ending_ppe_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      debt_schedule: {
+        type: "array",
+        description: "5-year debt schedule (if applicable)",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            beginning_debt: { type: "number" },
+            principal_payment: { type: "number" },
+            interest_expense: { type: "number" },
+            ending_debt: { type: "number" },
+            formula: {
+              type: "object",
+              properties: {
+                interest_expense_formula: { type: "string" },
+                ending_debt_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      income_statement: {
+        type: "array",
+        description: "5-year income statement",
         items: {
           type: "object",
           properties: {
             year: { type: "number" },
             revenue: { type: "number" },
-            operating_expenses: { type: "number" },
+            cost_of_revenue: { type: "number" },
+            gross_profit: { type: "number" },
+            sm_expense: { type: "number" },
+            rd_expense: { type: "number" },
+            ga_expense: { type: "number" },
+            total_opex: { type: "number" },
             ebitda: { type: "number" },
-            free_cash_flow: { type: "number" }
+            depreciation: { type: "number" },
+            ebit: { type: "number" },
+            interest_expense: { type: "number" },
+            ebt: { type: "number" },
+            tax_expense: { type: "number" },
+            net_income: { type: "number" },
+            formula: {
+              type: "object",
+              description: "Excel-like formulas for each calculated field",
+              properties: {
+                cost_of_revenue_formula: { type: "string" },
+                gross_profit_formula: { type: "string" },
+                sm_expense_formula: { type: "string" },
+                rd_expense_formula: { type: "string" },
+                ga_expense_formula: { type: "string" },
+                total_opex_formula: { type: "string" },
+                ebitda_formula: { type: "string" },
+                ebit_formula: { type: "string" },
+                ebt_formula: { type: "string" },
+                tax_expense_formula: { type: "string" },
+                net_income_formula: { type: "string" }
+              }
+            }
           }
         }
       },
-      terminal_value: { type: "number" },
-      enterprise_value: { type: "number" },
-      equity_value: { type: "number" }
+      balance_sheet: {
+        type: "array",
+        description: "5-year balance sheet",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            cash: { type: "number" },
+            ppe_net: { type: "number" },
+            total_assets: { type: "number" },
+            debt: { type: "number" },
+            retained_earnings: { type: "number" },
+            total_equity: { type: "number" },
+            total_liab_equity: { type: "number" },
+            formula: {
+              type: "object",
+              properties: {
+                cash_formula: { type: "string" },
+                total_assets_formula: { type: "string" },
+                retained_earnings_formula: { type: "string" },
+                total_equity_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      cash_flow_statement: {
+        type: "array",
+        description: "5-year cash flow statement",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            net_income: { type: "number" },
+            depreciation: { type: "number" },
+            change_in_wc: { type: "number" },
+            operating_cash_flow: { type: "number" },
+            capex: { type: "number" },
+            free_cash_flow: { type: "number" },
+            formula: {
+              type: "object",
+              properties: {
+                operating_cash_flow_formula: { type: "string" },
+                free_cash_flow_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      dcf_valuation: {
+        type: "array",
+        description: "DCF valuation calculation",
+        items: {
+          type: "object",
+          properties: {
+            year: { type: "number" },
+            ebit: { type: "number" },
+            tax_on_ebit: { type: "number" },
+            nopat: { type: "number" },
+            depreciation: { type: "number" },
+            capex: { type: "number" },
+            change_in_wc: { type: "number" },
+            unlevered_fcf: { type: "number" },
+            pv_factor: { type: "number" },
+            pv_of_fcf: { type: "number" },
+            formula: {
+              type: "object",
+              description: "Excel-like formulas for each calculated field",
+              properties: {
+                tax_on_ebit_formula: { type: "string" },
+                nopat_formula: { type: "string" },
+                unlevered_fcf_formula: { type: "string" },
+                pv_factor_formula: { type: "string" },
+                pv_of_fcf_formula: { type: "string" }
+              }
+            }
+          }
+        }
+      },
+      final_metrics: {
+        type: "object",
+        description: "Final valuation metrics and validation results",
+        properties: {
+          npv: { 
+            type: "number", 
+            description: "Net Present Value / Enterprise Value" 
+          },
+          irr: { 
+            type: "number", 
+            description: "Internal Rate of Return as decimal (e.g., 0.18 for 18%)" 
+          },
+          terminal_value: { 
+            type: "number",
+            description: "Terminal value calculation"
+          },
+          pv_of_terminal: {
+            type: "number",
+            description: "Present value of terminal value"
+          },
+          total_pv: { 
+            type: "number",
+            description: "Total present value of cash flows"
+          },
+          year_5_revenue: {
+            type: "number",
+            description: "Year 5 revenue for sanity check"
+          },
+          year_5_ebitda_margin: {
+            type: "number",
+            description: "Year 5 EBITDA margin for validation"
+          },
+          validation_status: {
+            type: "object",
+            description: "Results of MD-level validation checks",
+            properties: {
+              irr_check_passed: { type: "boolean" },
+              revenue_growth_realistic: { type: "boolean" },
+              margins_realistic: { type: "boolean" },
+              overall_validation: { type: "string" }
+            }
+          }
+        }
+      }
     }
   };
 
@@ -218,6 +666,35 @@ export default function Generate() {
     const industry = selectedIndustry;
 
     try {
+      // Step 0: Ensure user exists in database (critical for foreign key constraint)
+      console.log('Ensuring user exists in database...');
+      
+      let userData;
+      try {
+        userData = await User.me();
+        console.log('User API response:', userData);
+      } catch (userError) {
+        console.error('Failed to create/get user:', userError);
+        throw new Error(`User creation failed: ${userError.message}`);
+      }
+      
+      // Validate user response
+      if (!userData || !userData.id) {
+        console.error('Invalid user data received:', userData);
+        throw new Error('User validation failed - invalid user data received');
+      }
+      
+      // Validate user has proper credits before proceeding (skip for test users)
+      if (userData.credits_remaining <= 0 && !userData.is_test_user) {
+        throw new Error('Insufficient credits remaining');
+      }
+      
+      console.log('User verified in database:', userData.id, userData.email, 'Credits:', userData.credits_remaining);
+      setUser(userData); // Update user state with confirmed database user
+      
+      // Small delay to ensure database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Step 1: Generate company scenario
       setGenerationStep(1);
       const caseGen = getCasePrompt(industry);
@@ -245,10 +722,18 @@ export default function Generate() {
 
       // Step 3: Create case
       setGenerationStep(3);
+      console.log('Creating case with data:', {
+        name: caseName,
+        type: "DCF",
+        status: "template",
+        industry: industry,
+        user: userData.id
+      });
+      
       const newCase = await Case.create({
         name: caseName,
         type: "DCF",
-        status: "completed", // Mark as completed since we have the full model
+        status: "template", // Start with template status for now
         industry: industry,
         company_description: scenarioResult.company_description,
         starting_point: scenarioResult.starting_point,
@@ -256,6 +741,9 @@ export default function Generate() {
         answer_key: calculationResult,
         answer_key_excel: null,
       });
+      
+      console.log('Case created successfully:', newCase.id);
+      console.log('Full case object:', newCase);
 
       // Decrement user credits and refresh user data
       const updatedUserData = await User.updateMyUserData({ 
@@ -268,9 +756,12 @@ export default function Generate() {
 
       // Step 4: Navigate to case
       setGenerationStep(4); 
+      console.log('Navigating to case with ID:', newCase.id);
+      console.log('Navigation URL will be:', `/case?id=${newCase.id}`);
+      
       setTimeout(() => {
         router.push(`/case?id=${newCase.id}`);
-      }, 2000); // Increased timeout to ensure user sees completion
+      }, 3000); // Increased timeout to ensure database commit
 
     } catch (err) {
       console.error("Error generating case:", err);

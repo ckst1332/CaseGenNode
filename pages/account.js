@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { safeDate } from '../lib/utils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -180,7 +181,7 @@ export default function Account() {
               <div>
                 <label className="text-sm font-medium text-slate-600">Member Since</label>
                 <p className="text-slate-900 font-medium">
-                  {user?.created_date ? new Date(user.created_date).toLocaleDateString() : 'Recently'}
+                  {safeDate(user?.created_at || user?.created_date, 'Recently')}
                 </p>
               </div>
             </CardContent>
@@ -259,14 +260,14 @@ export default function Account() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-600">Last Case Generated</span>
                 <span className="font-semibold text-slate-900">
-                  {user?.last_case_date ? new Date(user.last_case_date).toLocaleDateString() : 'Never'}
+                  {safeDate(user?.last_case_date, 'Never')}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-600">Credits Reset</span>
                 <span className="font-semibold text-slate-900">
-                  {user?.last_credit_reset ? new Date(user.last_credit_reset).toLocaleDateString() : 'N/A'}
+                  {safeDate(user?.last_credit_reset, 'N/A')}
                 </span>
               </div>
             </CardContent>
