@@ -14,10 +14,18 @@ import {
   Calculator,
   FileSpreadsheet,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Award,
+  Target
 } from "lucide-react";
 import Link from "next/link";
 import Layout from "../src/pages/Layout";
+
+// Import new components
+import FinancialStatementsTemplate from "../components/case/FinancialStatementsTemplate";
+import ResultsEntry from "../components/case/ResultsEntry";
+import ResultsComparison from "../components/case/ResultsComparison";
+import DetailedModelDownload from "../components/case/DetailedModelDownload";
 
 // API Client
 const apiClient = {
@@ -86,6 +94,8 @@ export default function CaseDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [downloadingSolution, setDownloadingSolution] = useState(false);
+  const [submittingResults, setSubmittingResults] = useState(false);
+  const [currentWorkflowStep, setCurrentWorkflowStep] = useState('template');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -111,21 +121,46 @@ export default function CaseDetail() {
     setIsLoading(false);
   };
 
-  const handleDownloadTemplate = async () => {
+  // Determine current workflow step based on case data
+  useEffect(() => {
+    if (caseData) {
+      if (caseData.user_results) {
+        setCurrentWorkflowStep('completed');
+      } else if (caseData.answer_key) {
+        setCurrentWorkflowStep('submit_results');
+      } else {
+        setCurrentWorkflowStep('template');
+      }
+    }
+  }, [caseData]);
+
+  const handleResultsSubmit = async (userResults) => {
+    setSubmittingResults(true);
+    try {
+      // Update case with user results via API
+      const response = await apiClient.request(`/cases/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          user_results: userResults,
+          status: 'completed'
+        })
+      });
+      
+      setCaseData(response);
+      setCurrentWorkflowStep('completed');
+      
+    } catch (error) {
+      console.error("Error submitting results:", error);
+      alert("Error submitting results. Please try again.");
+    }
+    setSubmittingResults(false);
+  };
+
+  const handleTemplateDownload = async () => {
     setDownloadingTemplate(true);
     try {
-      const response = await fetch(`/api/cases/${id}/download-template`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${caseData.name}_template.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      // Download template using FinancialStatementsTemplate component logic
+      setCurrentWorkflowStep('submit_results');
     } catch (error) {
       console.error("Error downloading template:", error);
     }
@@ -135,18 +170,8 @@ export default function CaseDetail() {
   const handleDownloadSolution = async () => {
     setDownloadingSolution(true);
     try {
-      const response = await fetch(`/api/cases/${id}/download-solution`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${caseData.name}_solution.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      // This would be handled by DetailedModelDownload component
+      console.log("Solution download handled by DetailedModelDownload component");
     } catch (error) {
       console.error("Error downloading solution:", error);
     }
@@ -224,24 +249,82 @@ export default function CaseDetail() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Company Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="w-5 h-5" />
-                  Company Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-700 leading-relaxed">
-                  {caseData.company_description || 'No description available.'}
-                </p>
-              </CardContent>
-            </Card>
+        {/* Workflow-based Content */}
+        <div className="space-y-6">
+          {/* Company Information - Always Visible */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Company Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-700 leading-relaxed mb-4">
+                {caseData.company_description || 'No description available.'}
+              </p>
+              
+              {/* Quick Facts Grid */}
+              <div className="grid md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-sm text-slate-600">Starting ARR</div>
+                  <div className="font-semibold text-lg">
+                    ${(caseData.starting_point?.current_arr || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-slate-600">WACC</div>
+                  <div className="font-semibold text-lg">
+                    {((caseData.assumptions?.financial_assumptions?.wacc || 0) * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-slate-600">Industry</div>
+                  <div className="font-semibold text-lg">{caseData.industry}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Starting Point */}
+          {/* Step 1: Template Phase */}
+          {currentWorkflowStep === 'template' && (
+            <FinancialStatementsTemplate 
+              caseData={caseData} 
+              onDownload={handleTemplateDownload}
+            />
+          )}
+
+          {/* Step 2: Results Entry Phase */}
+          {currentWorkflowStep === 'submit_results' && (
+            <ResultsEntry 
+              caseData={caseData}
+              onResultsSubmit={handleResultsSubmit}
+              isSubmitting={submittingResults}
+            />
+          )}
+
+          {/* Step 3: Completed Phase */}
+          {currentWorkflowStep === 'completed' && caseData.user_results && caseData.answer_key && (
+            <div className="space-y-6">
+              <ResultsComparison 
+                userResults={caseData.user_results}
+                answerKey={caseData.answer_key}
+                caseData={caseData}
+              />
+              
+              <DetailedModelDownload 
+                caseData={caseData}
+                userResults={caseData.user_results}
+                isUnlocked={true}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar with Case Details and Quick Actions */}
+        <div className="grid lg:grid-cols-4 gap-6 mt-8">
+          <div className="lg:col-span-3">
+            {/* Starting Point Details */}
             {caseData.starting_point && (
               <Card>
                 <CardHeader>
@@ -259,35 +342,7 @@ export default function CaseDetail() {
                         </span>
                         <span className="font-semibold text-slate-900">
                           {typeof value === 'number' ? 
-                            (key.includes('percent') ? `${value}%` : value.toLocaleString()) : 
-                            value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Assumptions */}
-            {caseData.assumptions && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calculator className="w-5 h-5" />
-                    Growth Assumptions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {Object.entries(caseData.assumptions).map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                        <span className="text-sm font-medium text-slate-600 capitalize">
-                          {key.replace(/_/g, ' ')}
-                        </span>
-                        <span className="font-semibold text-slate-900">
-                          {typeof value === 'number' ? 
-                            (key.includes('rate') || key.includes('wacc') ? `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
+                            (key.includes('percent') ? `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
                             value}
                         </span>
                       </div>

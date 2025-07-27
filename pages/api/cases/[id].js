@@ -32,6 +32,36 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Failed to get case" });
       }
     }
+
+    if (req.method === 'PATCH') {
+      try {
+        // First, get the existing case to check ownership
+        const existingCase = await supabaseStorage.getCase(id);
+        
+        if (!existingCase) {
+          return res.status(404).json({ error: "Case not found" });
+        }
+        
+        // Check if user owns this case
+        if (existingCase.user_id !== userId) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+        
+        // Update the case with the provided data
+        const updateData = req.body;
+        const updatedCase = await supabaseStorage.saveCase(id, {
+          ...existingCase,
+          ...updateData,
+          updated_at: new Date().toISOString()
+        });
+        
+        console.log('Case updated successfully:', { id, updateData: Object.keys(updateData) });
+        return res.status(200).json(updatedCase);
+      } catch (error) {
+        console.error('Error updating case in Supabase:', error);
+        return res.status(500).json({ error: "Failed to update case" });
+      }
+    }
     
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
