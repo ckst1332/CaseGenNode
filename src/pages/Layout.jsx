@@ -45,7 +45,7 @@ const navigationItems = [
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
 
-  if (currentPageName === "Landing") {
+  if (["Landing", "Login", "Signup"].includes(currentPageName)) {
     return <div className="min-h-screen">{children}</div>;
   }
 
