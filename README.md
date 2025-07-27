@@ -17,10 +17,11 @@ Create a `.env` file with the following variables to enable logging in with Gmai
 ```
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-SESSION_SECRET=some-session-secret
+NEXTAUTH_SECRET=some-session-secret
+NEXTAUTH_URL=http://localhost:3000
 ```
 
-Once configured, submitting the Login or Signup forms redirects through Google OAuth.
+Once configured, clicking "Continue with Google" on the Login or Signup pages will start the Google login flow using NextAuth.
 
 ## Building the app
 
