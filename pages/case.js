@@ -285,30 +285,104 @@ export default function CaseDetail() {
 
         {/* Sidebar with Case Details and Quick Actions */}
         <div className="grid lg:grid-cols-4 gap-6 mt-8">
-          <div className="lg:col-span-3">
-            {/* Starting Point Details */}
-            {caseData.starting_point && (
+          <div className="lg:col-span-3 space-y-6">
+            {/* Enhanced Starting Point and Assumptions */}
+            {(caseData.starting_point || caseData.year_0_baseline) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    Starting Point (Year 0)
+                    Year 0 Baseline & Model Assumptions
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {Object.entries(caseData.starting_point).map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                        <span className="text-sm font-medium text-slate-600 capitalize">
-                          {key.replace(/_/g, ' ')}
-                        </span>
-                        <span className="font-semibold text-slate-900">
-                          {typeof value === 'number' ? 
-                            (key.includes('percent') ? `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
-                            value}
-                        </span>
+                <CardContent className="space-y-6">
+                  {/* Year 0 Baseline Data */}
+                  <div>
+                    <h4 className="font-medium text-slate-700 mb-3">📊 Starting Point (Year 0)</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {Object.entries(caseData.starting_point || caseData.year_0_baseline?.operational_metrics || {}).map(([key, value]) => (
+                        <div key={key} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border">
+                          <span className="text-sm font-medium text-slate-600 capitalize">
+                            {key.replace(/_/g, ' ')}
+                          </span>
+                          <span className="font-semibold text-slate-900">
+                            {typeof value === 'number' ? 
+                              (key.includes('margin') || key.includes('rate') || key.includes('percent') ? 
+                                `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
+                              value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Operational Assumptions */}
+                  {caseData.assumptions?.operational_drivers && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-3">🚀 Operational Growth Drivers</h4>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {Object.entries(caseData.assumptions.operational_drivers).map(([key, value]) => (
+                          <div key={key} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium text-green-700 capitalize">
+                                {key.replace(/_/g, ' ')}
+                              </span>
+                              <span className="text-sm font-semibold text-green-800">
+                                {Array.isArray(value) ? 
+                                  `Years 1-5: ${value.join(', ')}` : 
+                                  (typeof value === 'number' && key.includes('rate') ? 
+                                    `${(value * 100).toFixed(1)}%` : value)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  {/* Financial Assumptions */}
+                  {caseData.assumptions?.financial_assumptions && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-3">💰 Financial Assumptions</h4>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {Object.entries(caseData.assumptions.financial_assumptions).map(([key, value]) => (
+                          <div key={key} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="text-center">
+                              <div className="text-xs text-blue-600 mb-1 capitalize">
+                                {key.replace(/_/g, ' ')}
+                              </div>
+                              <div className="font-semibold text-blue-800">
+                                {typeof value === 'number' && (key.includes('rate') || key.includes('wacc')) ? 
+                                  `${(value * 100).toFixed(1)}%` : value}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Model Complexity Indicator */}
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h4 className="font-medium text-purple-800 mb-2">🎯 Model Complexity</h4>
+                    <div className="grid md:grid-cols-4 gap-4 text-center">
+                      <div className="p-2 bg-white rounded border">
+                        <div className="text-xs text-purple-600">Statements</div>
+                        <div className="font-bold text-purple-800">3-Statement</div>
+                      </div>
+                      <div className="p-2 bg-white rounded border">
+                        <div className="text-xs text-purple-600">Projection Period</div>
+                        <div className="font-bold text-purple-800">5 Years</div>
+                      </div>
+                      <div className="p-2 bg-white rounded border">
+                        <div className="text-xs text-purple-600">Valuation Method</div>
+                        <div className="font-bold text-purple-800">DCF</div>
+                      </div>
+                      <div className="p-2 bg-white rounded border">
+                        <div className="text-xs text-purple-600">Difficulty</div>
+                        <div className="font-bold text-purple-800">Intermediate</div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

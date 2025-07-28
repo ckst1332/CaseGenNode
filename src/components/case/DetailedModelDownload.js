@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Award, Lock, FileSpreadsheet } from 'lucide-react';
+import { Download, Award, Lock, FileSpreadsheet, TrendingUp, Calculator } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const DetailedModelDownload = ({ caseData, userResults, isUnlocked = false }) => {
@@ -189,24 +189,35 @@ const DetailedModelDownload = ({ caseData, userResults, isUnlocked = false }) =>
     ).join('\n');
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!isUnlocked) {
       alert('Please submit your results first to unlock the detailed model download.');
       return;
     }
 
-    const csvContent = generateFullModelCSV();
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${caseData.name || 'case'}_detailed_model_answer_key.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
+    try {
+      // Use the XLSX download endpoint
+      const response = await fetch(`/api/cases/${caseData.id}/download-solution?format=xlsx`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${caseData.company_name || caseData.name || 'case'}_solution.xlsx`;
       link.click();
-      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading file. Please try again.');
     }
   };
 
@@ -233,16 +244,16 @@ const DetailedModelDownload = ({ caseData, userResults, isUnlocked = false }) =>
           ) : (
             <Lock className="w-5 h-5 text-gray-400" />
           )}
-          Detailed Financial Model - Answer Key
+          Professional Financial Model - Complete Answer Key
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-600">
               {isUnlocked 
-                ? 'Complete model with formulas and validation checks'
-                : 'Submit your results to unlock the detailed answer key'
+                ? 'Institutional-grade 3-statement model with formulas and validation'
+                : 'Submit your results to unlock the comprehensive answer key'
               }
             </p>
           </div>
@@ -252,56 +263,126 @@ const DetailedModelDownload = ({ caseData, userResults, isUnlocked = false }) =>
         </div>
 
         {finalMetrics && (
-          <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Answer Key Metrics:</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
+          <div className="grid md:grid-cols-2 gap-6 p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-blue-800 flex items-center gap-2">
+                <Calculator className="w-4 h-4" />
+                Answer Key Metrics
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
                   <span className="text-gray-600">NPV:</span>
-                  <span className="font-medium">${finalMetrics.npv}</span>
+                  <span className="font-bold text-lg text-green-600">${finalMetrics.npv}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
                   <span className="text-gray-600">IRR:</span>
-                  <span className="font-medium">{finalMetrics.irr}</span>
+                  <span className="font-bold text-lg text-blue-600">{finalMetrics.irr}</span>
                 </div>
+                {finalMetrics.terminalValue && (
+                  <div className="flex justify-between items-center p-2 bg-white rounded border">
+                    <span className="text-gray-600">Terminal Value:</span>
+                    <span className="font-medium">${finalMetrics.terminalValue}</span>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Model Includes:</h4>
-              <ul className="text-xs text-gray-600 space-y-1">
-                <li>• Complete 3-statement model</li>
-                <li>• Revenue buildup schedule</li>
-                <li>• DCF valuation with formulas</li>
-                <li>• Step-by-step calculations</li>
-                <li>• Validation methodology</li>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-blue-800 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4" />
+                Excel Workbook Includes
+              </h4>
+              <ul className="text-sm text-gray-700 space-y-2">
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  Executive Summary with key metrics
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Complete 3-statement model (P&L, BS, CF)
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  Year 0 baseline with 5-year projections
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  DCF valuation with terminal value
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  Formula explanations for each metric
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                  Professional formatting & styling
+                </li>
               </ul>
             </div>
           </div>
         )}
 
+        {/* Enhanced Model Details */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h5 className="font-medium text-blue-800 mb-2">📊 Multiple Worksheets</h5>
+            <ul className="text-xs text-blue-700 space-y-1">
+              <li>• Executive Summary</li>
+              <li>• Income Statement</li>
+              <li>• Balance Sheet</li>
+              <li>• Cash Flow Statement</li>
+              <li>• DCF Valuation</li>
+            </ul>
+          </div>
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <h5 className="font-medium text-green-800 mb-2">🎨 Professional Format</h5>
+            <ul className="text-xs text-green-700 space-y-1">
+              <li>• Color-coded tabs</li>
+              <li>• Currency formatting</li>
+              <li>• Percentage formats</li>
+              <li>• Borders & styling</li>
+              <li>• Optimized columns</li>
+            </ul>
+          </div>
+          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <h5 className="font-medium text-purple-800 mb-2">🔧 Advanced Features</h5>
+            <ul className="text-xs text-purple-700 space-y-1">
+              <li>• Statement interconnections</li>
+              <li>• Working capital flow</li>
+              <li>• Balance sheet balancing</li>
+              <li>• Terminal growth calc</li>
+              <li>• Validation checks</li>
+            </ul>
+          </div>
+        </div>
+
         <Button 
           onClick={handleDownload} 
           disabled={!isUnlocked}
-          className="w-full"
+          className="w-full h-12 text-lg font-semibold"
+          size="lg"
         >
           {isUnlocked ? (
             <>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Download Complete Model (CSV)
+              <FileSpreadsheet className="w-5 h-5 mr-3" />
+              Download Professional Excel Model (XLSX)
             </>
           ) : (
             <>
-              <Lock className="w-4 h-4 mr-2" />
-              Submit Results to Unlock
+              <Lock className="w-5 h-5 mr-3" />
+              Submit Results to Unlock Professional Model
             </>
           )}
         </Button>
 
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>• This download contains the complete answer key with all formulas</p>
-          <p>• Use it to understand exactly how the model was constructed</p>
-          <p>• Compare your approach with the validated methodology</p>
-          {userResults && <p>• Includes comparison with your submitted results</p>}
+        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+          <h5 className="font-medium text-yellow-800 mb-2">💡 How to Use This Model</h5>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p>• <strong>Study the formulas:</strong> Understand the calculation methodology used</p>
+            <p>• <strong>Compare your approach:</strong> See how your model differs from the validated solution</p>
+            <p>• <strong>Learn best practices:</strong> Notice the professional formatting and structure</p>
+            <p>• <strong>Use as reference:</strong> Apply these techniques to future financial models</p>
+            {userResults && <p>• <strong>Review variances:</strong> Understand why your results differed</p>}
+          </div>
         </div>
       </CardContent>
     </Card>

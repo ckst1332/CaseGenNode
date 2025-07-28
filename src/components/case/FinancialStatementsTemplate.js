@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, FileSpreadsheet, Calculator, Target } from 'lucide-react';
+import { Download, FileSpreadsheet, Calculator, Target, TrendingUp, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const FinancialStatementsTemplate = ({ caseData, onDownload }) => {
@@ -159,24 +159,35 @@ const FinancialStatementsTemplate = ({ caseData, onDownload }) => {
     ).join('\n');
   };
 
-  const handleDownload = () => {
-    const csvContent = generateTemplateCSV();
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${caseData.name || 'case'}_financial_model_template.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
+  const handleDownload = async () => {
+    try {
+      // Use the XLSX template download endpoint
+      const response = await fetch(`/api/cases/${caseData.id}/download-template?format=xlsx`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${caseData.company_name || caseData.name || 'case'}_template.xlsx`;
       link.click();
-      document.body.removeChild(link);
-    }
-    
-    // Notify parent component that download completed
-    if (onDownload) {
-      onDownload();
+      window.URL.revokeObjectURL(url);
+      
+      // Notify parent component that download completed
+      if (onDownload) {
+        onDownload();
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading template. Please try again.');
     }
   };
 
@@ -185,81 +196,181 @@ const FinancialStatementsTemplate = ({ caseData, onDownload }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileSpreadsheet className="w-5 h-5 text-blue-500" />
-          Download Financial Model Template
+          Professional Financial Model Template
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="font-medium text-blue-800 mb-2">📊 Your Mission:</h4>
-          <p className="text-sm text-blue-700 mb-3">
-            Build a complete 5-year DCF financial model for <strong>{caseData.name}</strong> using the provided assumptions.
+      <CardContent className="space-y-6">
+        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <h4 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Your Mission: Build a Complete DCF Model
+          </h4>
+          <p className="text-sm text-blue-700 mb-4">
+            Create an institutional-grade 3-statement financial model for <strong>{caseData.company_name || caseData.name}</strong> using the comprehensive assumptions provided.
           </p>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h5 className="font-medium text-blue-800 text-sm mb-1">What's Included:</h5>
-              <ul className="text-xs text-blue-600 space-y-1">
-                <li>• Company description & context</li>
-                <li>• Year 0 starting point data</li>
-                <li>• 5-year growth assumptions</li>
-                <li>• Template structure for all statements</li>
-                <li>• Key formula reminders</li>
+              <h5 className="font-medium text-blue-800 text-sm mb-2">📋 Excel Template Includes:</h5>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Multi-worksheet structure with scenario tab</li>
+                <li>• Year 0 baseline reference data</li>
+                <li>• Comprehensive growth assumptions</li>
+                <li>• Empty model structure for all statements</li>
+                <li>• Professional formatting & formulas</li>
+                <li>• Key calculation reminders</li>
               </ul>
             </div>
             <div>
-              <h5 className="font-medium text-blue-800 text-sm mb-1">Your Task:</h5>
-              <ul className="text-xs text-blue-600 space-y-1">
-                <li>• Build revenue buildup schedule</li>
-                <li>• Create 3-statement model (IS, BS, CFS)</li>
-                <li>• Calculate DCF valuation</li>
-                <li>• Determine NPV and IRR</li>
-                <li>• Submit final results</li>
+              <h5 className="font-medium text-blue-800 text-sm mb-2">🎯 Your Deliverables:</h5>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Revenue buildup schedule</li>
+                <li>• Income Statement (P&L)</li>
+                <li>• Balance Sheet (Assets = Liab + Equity)</li>
+                <li>• Cash Flow Statement (Ops/Inv/Fin)</li>
+                <li>• DCF valuation with terminal value</li>
+                <li>• Final NPV and IRR calculations</li>
               </ul>
             </div>
           </div>
         </div>
 
-        {/* Key Metrics Summary */}
-        <div className="grid md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-          <div className="text-center">
-            <div className="text-sm text-gray-600">Starting ARR</div>
-            <div className="font-semibold text-lg">
-              ${formatNumber(caseData.starting_point?.current_arr)}
+        {/* Enhanced Assumptions Display */}
+        <div className="space-y-4">
+          <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Comprehensive Model Assumptions
+          </h4>
+          
+          {/* Key Metrics Grid */}
+          <div className="grid md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="text-center p-3 bg-white rounded border">
+              <div className="text-xs text-gray-600 mb-1">Starting ARR</div>
+              <div className="font-bold text-lg text-green-600">
+                ${formatNumber(caseData.starting_point?.current_arr || caseData.year_0_baseline?.operational_metrics?.current_arr)}
+              </div>
+            </div>
+            <div className="text-center p-3 bg-white rounded border">
+              <div className="text-xs text-gray-600 mb-1">Discount Rate (WACC)</div>
+              <div className="font-bold text-lg text-blue-600">
+                {formatPercent(caseData.assumptions?.financial_assumptions?.wacc)}
+              </div>
+            </div>
+            <div className="text-center p-3 bg-white rounded border">
+              <div className="text-xs text-gray-600 mb-1">Terminal Growth</div>
+              <div className="font-bold text-lg text-purple-600">
+                {formatPercent(caseData.assumptions?.financial_assumptions?.terminal_growth_rate || 0.03)}
+              </div>
+            </div>
+            <div className="text-center p-3 bg-white rounded border">
+              <div className="text-xs text-gray-600 mb-1">Target IRR Range</div>
+              <div className="font-bold text-lg text-orange-600">15-25%</div>
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600">WACC</div>
-            <div className="font-semibold text-lg">
-              {formatPercent(caseData.assumptions?.financial_assumptions?.wacc)}
+
+          {/* Detailed Assumptions */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Operational Assumptions */}
+            {caseData.assumptions?.operational_drivers && (
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <h5 className="font-medium text-green-800 mb-3">🚀 Operational Drivers</h5>
+                <div className="space-y-2">
+                  {Object.entries(caseData.assumptions.operational_drivers).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center p-2 bg-white rounded border border-green-100">
+                      <span className="text-sm font-medium text-green-700 capitalize">
+                        {key.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-sm font-semibold text-green-800">
+                        {Array.isArray(value) ? value.join(', ') : 
+                         (typeof value === 'number' && key.includes('rate') ? formatPercent(value) : value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Financial Assumptions */}
+            {caseData.assumptions?.financial_assumptions && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h5 className="font-medium text-blue-800 mb-3">💰 Financial Assumptions</h5>
+                <div className="space-y-2">
+                  {Object.entries(caseData.assumptions.financial_assumptions).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
+                      <span className="text-sm font-medium text-blue-700 capitalize">
+                        {key.replace(/_/g, ' ')}
+                      </span>
+                      <span className="text-sm font-semibold text-blue-800">
+                        {typeof value === 'number' && (key.includes('rate') || key.includes('wacc')) ? 
+                         formatPercent(value) : value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Year 0 Baseline */}
+          {(caseData.starting_point || caseData.year_0_baseline) && (
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <h5 className="font-medium text-purple-800 mb-3">📊 Year 0 Baseline Data</h5>
+              <div className="grid md:grid-cols-3 gap-3">
+                {Object.entries(caseData.starting_point || caseData.year_0_baseline?.operational_metrics || {}).map(([key, value]) => (
+                  <div key={key} className="flex justify-between items-center p-2 bg-white rounded border border-purple-100">
+                    <span className="text-xs font-medium text-purple-700 capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-xs font-semibold text-purple-800">
+                      {typeof value === 'number' ? 
+                        (key.includes('margin') || key.includes('rate') ? formatPercent(value) : formatNumber(value)) : 
+                        value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm text-gray-600">Target IRR Range</div>
-            <div className="font-semibold text-lg">15-25%</div>
-          </div>
+          )}
         </div>
 
         <Button 
           onClick={handleDownload} 
-          className="w-full"
+          className="w-full h-12 text-lg font-semibold"
           size="lg"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Download Template (CSV)
+          <Download className="w-5 h-5 mr-3" />
+          Download Professional Excel Template (XLSX)
         </Button>
 
-        <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
-          <Target className="w-4 h-4 text-amber-600" />
-          <p className="text-sm text-amber-700">
-            <strong>Next Step:</strong> Once you download the template and build your model, 
-            return here to submit your calculated NPV and IRR results.
-          </p>
+        <div className="flex items-center gap-2 p-4 bg-amber-50 rounded-lg border border-amber-200">
+          <Target className="w-5 h-5 text-amber-600" />
+          <div className="text-sm text-amber-700">
+            <p className="font-medium mb-1">Next Steps:</p>
+            <p>1. Download the professional Excel template with all assumptions</p>
+            <p>2. Build your comprehensive 3-statement financial model</p>
+            <p>3. Calculate NPV and IRR using DCF methodology</p>
+            <p>4. Return here to submit your results and compare with the solution</p>
+          </div>
         </div>
 
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>• Template includes all necessary sections and formulas</p>
-          <p>• Build your model in Excel, Google Sheets, or your preferred tool</p>
-          <p>• Focus on accuracy - small changes can significantly impact valuation</p>
-          <p>• Take your time to double-check calculations</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h5 className="font-medium text-gray-800 mb-2">💡 Modeling Tips</h5>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Start with revenue buildup using customer and ARPU assumptions</li>
+              <li>• Ensure balance sheet balances (Assets = Liabilities + Equity)</li>
+              <li>• Link statements properly (Net Income flows to BS and CF)</li>
+              <li>• Double-check working capital calculations</li>
+            </ul>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h5 className="font-medium text-gray-800 mb-2">🎯 Success Criteria</h5>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• IRR should fall within 15-25% range for realistic models</li>
+              <li>• Cash balances should remain positive throughout</li>
+              <li>• Revenue growth should follow provided assumptions</li>
+              <li>• All formulas should be clearly documented</li>
+            </ul>
+          </div>
         </div>
       </CardContent>
     </Card>
