@@ -113,44 +113,120 @@ const generateFinancialModelPrompt = (caseData) => {
   const startingPoint = caseData.starting_point || {};
   
   const prompt = `
-    You are building a financial model with a rigorous two-tier validation process: VP-level initial review followed by MD-level final approval.
-
-    **Case Data:**
+    You are an elite financial modeling expert building a comprehensive DCF model with ITERATIVE SELF-CORRECTION until all validation checks pass.
+    
+    **CASE DATA:**
     - Starting Point: ${JSON.stringify(startingPoint)}
     - Operational Drivers: ${JSON.stringify(operationalDrivers)}
     - Financial Assumptions: ${JSON.stringify(financialAssumptions)}
-
-    **STEP 1: Build the Complete Model**
-    Build a full 5-year financial model with:
-    - Revenue buildup (customers × ARPU with growth/churn)
-    - Complete Income Statement, Balance Sheet, Cash Flow Statement
-    - DCF valuation to calculate NPV and IRR
     
-    For EVERY calculated line item, include a "formula" field with Excel-like formulas showing the calculation logic. Examples:
-    - Revenue: "Previous Revenue * (1 + Revenue Growth Rate)"
-    - COGS: "Revenue * (1 - Gross Margin %)"
-    - EBIT: "Revenue - COGS - Operating Expenses"
-    - Taxes: "EBIT * Tax Rate"
-    - Free Cash Flow: "EBIT * (1 - Tax Rate) + Depreciation - CapEx - Change in NWC"
+    **CRITICAL: You MUST iterate internally until your model passes ALL validation checks. Do NOT output a model that fails any check.**
 
-    **STEP 2: VP-Level Review (Internal Check)**
-    Review the model as a VP would:
-    - Are growth rates sustainable year-over-year?
-    - Do margins improve realistically?
-    - Are cash flows positive by Year 3-5?
-    - Adjust assumptions if any red flags appear.
-
-    **STEP 3: MD-Level Final Validation (Critical)**
-    Review as an MD would before client presentation:
-    - **IRR Reality Check:** Is the IRR between 15-25% for a SaaS business? Not 35%+?
-    - **Valuation Multiple Check:** Calculate EV/EBITDA. Should be 8-15x for mature SaaS, not 25x+
-    - **Growth vs. Profitability Trade-off:** High growth should impact margins realistically
-    - **Tax Rate Check:** Ensure taxes are calculated as EBIT * Tax_Rate, not excessive amounts
-    - **IF METRICS FAIL:** Revise core assumptions (lower growth, higher costs) and recalculate until defensible
+    **STEP 1: GENERATE REALISTIC CASE ASSUMPTIONS & VALIDATE**
     
-    **CRITICAL:** Only proceed if both VP and MD would approve these numbers in a real investment scenario.
+    First validate and adjust the provided assumptions against industry benchmarks:
+    
+    🏢 **SaaS Industry Benchmarks:**
+    - Annual churn: 5-11% (healthy SaaS ~1% monthly = 12% annual max)
+    - Gross margins: 70-85% (typical SaaS after hosting/support costs)
+    - WACC: 10% (stable public SaaS) to 15-20% (early-stage)
+    - Customer acquisition growth: Decreasing over time (40% Y1 → 15% Y5)
+    - Terminal growth: 2-3% (conservative long-term)
+    
+    **IF ANY PROVIDED ASSUMPTION IS OUTSIDE BENCHMARKS**: Adjust it to realistic range and document in validation_status.
 
-    Return the complete model with formulas for every calculated line item.
+    **STEP 2: BUILD INTEGRATED 3-STATEMENT MODEL**
+    
+    1. **Income Statement** (5 years):
+       - Revenue buildup from customer/capacity drivers
+       - COGS based on industry-appropriate gross margins
+       - OpEx (S&M, R&D, G&A) with realistic progression
+       - D&A from asset depreciation schedule
+       - Taxes on positive EBIT only (no negative taxes)
+    
+    2. **Balance Sheet** (5 years):
+       - Assets: Cash (from CFS), PP&E (cost - accumulated depreciation), Working Capital
+       - Liabilities: AP, Debt (if any)
+       - Equity: Initial equity + retained earnings (accumulating net income)
+       - CRITICAL: Must balance every year (Assets = Liabilities + Equity)
+    
+    3. **Cash Flow Statement** (5 years):
+       - CFO: Net Income + Depreciation ± Working Capital changes
+       - CFI: CapEx (negative), Asset sales (if any)
+       - CFF: Equity/Debt financing, Dividends
+       - Ending Cash = Beginning Cash + Net Change
+       - CRITICAL: Ending cash must link to Balance Sheet cash
+
+    **STEP 3: DCF VALUATION WITH VALIDATION**
+    
+    Calculate DCF using two methods to cross-check:
+    - Method 1: FCF = CFO - CapEx 
+    - Method 2: FCF = EBIT(1-Tax) + Depreciation - CapEx - ΔWorking Capital
+    
+    Both methods MUST yield identical FCF for each year.
+    
+    Terminal Value = FCF_Year5 × (1+g) / (WACC-g) where g < WACC
+    NPV = Sum of PV(FCFs) + PV(Terminal Value)
+    IRR = Rate where NPV = 0
+
+    **STEP 4: COMPREHENSIVE VALIDATION & SELF-CORRECTION**
+    
+    🔍 **MANDATORY VALIDATION CHECKS:**
+    
+    1. **Balance Sheet Balance**: Assets = Liabilities + Equity every year (difference must = 0)
+    2. **Cash Flow Consistency**: FCF calculated two ways must match
+    3. **IRR Reasonableness**: 15-25% for SaaS (adjust if outside range)
+    4. **EV/EBITDA Multiple**: Should be 8-15x Year 5 EBITDA
+    5. **Margin Progression**: Gross margins stable, operating margins improve over time
+    6. **Cash Flow Timing**: FCF positive by Year 3-4 latest
+    7. **Growth Rates**: Revenue growth decreasing over time (not constant high growth)
+    8. **Terminal Growth**: Must be < WACC (typically 2-3%)
+    
+    **SELF-CORRECTION PROCESS:**
+    
+    FOR EACH FAILED CHECK:
+    1. **Identify the specific issue** (e.g., IRR too high at 35%)
+    2. **Determine root cause** (e.g., terminal growth too high, costs too low)
+    3. **Adjust assumptions systematically**:
+       - IRR too high → Reduce terminal growth OR increase WACC OR increase costs
+       - IRR too low → Increase growth rates OR reduce costs OR reduce WACC
+       - Margins unrealistic → Adjust COGS/OpEx ratios
+       - Cash flow issues → Adjust CapEx timing or working capital
+    4. **Recalculate ENTIRE model** with adjusted assumptions
+    5. **Re-run ALL validation checks**
+    6. **Repeat until ALL checks pass**
+    
+    **ITERATION REQUIREMENT:**
+    You may need to iterate 3-5 times internally. DO NOT output until everything validates.
+    
+    Document each adjustment made in the validation_status section.
+
+    **STEP 5: FORMULA TRANSPARENCY (Excel-Style)**
+    
+    For EVERY calculated field, provide Excel-like formulas:
+    - Revenue_Year2: "=Revenue_Year1 * (1 + Growth_Rate_Year2)"
+    - COGS_Year2: "=Revenue_Year2 * COGS_Percentage"
+    - FCF_Year2: "=EBIT_Year2 * (1-Tax_Rate) + Depreciation_Year2 - CapEx_Year2"
+    - PV_FCF_Year2: "=FCF_Year2 / (1 + WACC)^2"
+    
+    **FINAL OUTPUT REQUIREMENTS:**
+    
+    Output ONLY a model where:
+    ✅ All validation checks pass
+    ✅ IRR is within realistic industry range (15-25%)
+    ✅ Balance sheet balances every year  
+    ✅ Cash flows are consistent
+    ✅ All formulas are documented
+    ✅ Adjustments are documented in validation_status
+    
+    **CRITICAL SUCCESS CRITERIA:**
+    - NO failed validation checks
+    - IRR between 15-25% for SaaS
+    - EV/EBITDA multiple 8-15x
+    - Conservative terminal growth (2-3%)
+    - Realistic margin progression
+    
+    Remember: This is an educational tool. The model must be both mathematically correct AND economically realistic. Keep iterating until both criteria are met.
   `;
   
   const schema = {
