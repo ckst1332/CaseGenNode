@@ -5,7 +5,7 @@ import { Loader2, CheckCircle } from "lucide-react";
 export default function GenerationProgress({ step, caseType }) {
   const steps = [
     "Generating company scenario...",
-    "Calculating financial model...",
+    "Building & validating financial model...",
     "Creating case study...",
     "Finalizing and saving...",
     "Redirecting..."
@@ -15,7 +15,7 @@ export default function GenerationProgress({ step, caseType }) {
     <Card className="w-full max-w-md text-center shadow-2xl">
       <CardHeader>
         <CardTitle>Generating {caseType} Case</CardTitle>
-        <p className="text-slate-500">Please wait, this may take a moment.</p>
+        <p className="text-slate-500">Our AI is building a comprehensive financial model with validation checks.</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
