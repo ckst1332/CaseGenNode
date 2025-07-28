@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
+import { LLAMA_MODEL_CONFIG, LLAMA_PROMPT_GUIDELINES } from "../../../lib/ai/llama-config.js";
 
 // Together AI configuration
 const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
@@ -9,7 +10,7 @@ const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
 const USE_MOCK = !TOGETHER_API_KEY;
 
 // Real LLM implementation using Together AI's free Llama 3.3 70B
-const invokeRealLLM = async ({ prompt, response_json_schema }) => {
+const invokeRealLLM = async ({ prompt, response_json_schema, task_type = 'CASE_GENERATION' }) => {
   try {
     // Enhanced prompt for JSON schema compliance
     const enhancedPrompt = `
@@ -34,20 +35,18 @@ Respond with JSON only:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+        model: LLAMA_MODEL_CONFIG.MODEL_NAME,
         messages: [
           {
             role: "system",
-            content: "You are a world-class financial modeling expert. Always respond with valid JSON that matches the requested schema exactly."
+            content: LLAMA_PROMPT_GUIDELINES.SYSTEM_ROLE.financial_expert
           },
           {
             role: "user",
             content: enhancedPrompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 4000,
-        top_p: 0.9
+        ...LLAMA_MODEL_CONFIG[task_type]
       })
     });
 
@@ -62,26 +61,102 @@ Respond with JSON only:
       throw new Error("No content received from Together AI");
     }
 
-    // Extract JSON from the response
-    let jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      // Try to parse the entire content as JSON
-      jsonMatch = [content];
+    // Enhanced JSON extraction for LLaMA 3.3 outputs
+    let jsonContent = content.trim();
+    
+    // Remove markdown code blocks if present
+    if (jsonContent.startsWith('```json')) {
+      jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (jsonContent.startsWith('```')) {
+      jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
-
-    try {
-      const parsedJson = JSON.parse(jsonMatch[0]);
-      return parsedJson;
-    } catch (parseError) {
-      console.error("JSON parsing failed:", parseError);
-      console.error("Raw content:", content);
-      throw new Error(`Invalid JSON response from AI: ${parseError.message}`);
+    
+    // Try multiple extraction methods
+    let parsedJson = null;
+    const extractionMethods = [
+      // Method 1: Direct parsing
+      () => JSON.parse(jsonContent),
+      // Method 2: Extract JSON object from text
+      () => {
+        const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      },
+      // Method 3: Find complete JSON object with proper nesting
+      () => {
+        let braceCount = 0;
+        let startIndex = -1;
+        let endIndex = -1;
+        
+        for (let i = 0; i < jsonContent.length; i++) {
+          if (jsonContent[i] === '{') {
+            if (startIndex === -1) startIndex = i;
+            braceCount++;
+          } else if (jsonContent[i] === '}') {
+            braceCount--;
+            if (braceCount === 0 && startIndex !== -1) {
+              endIndex = i;
+              break;
+            }
+          }
+        }
+        
+        if (startIndex !== -1 && endIndex !== -1) {
+          return JSON.parse(jsonContent.substring(startIndex, endIndex + 1));
+        }
+        return null;
+      }
+    ];
+    
+    for (let i = 0; i < extractionMethods.length; i++) {
+      try {
+        parsedJson = extractionMethods[i]();
+        if (parsedJson) {
+          console.log(`LLaMA JSON parsed successfully using method ${i + 1}`);
+          return parsedJson;
+        }
+      } catch (error) {
+        // Continue to next method
+        console.warn(`JSON extraction method ${i + 1} failed:`, error.message);
+      }
     }
+    
+    // If all methods fail, log and throw error
+    console.error("All JSON parsing methods failed for LLaMA response");
+    console.error("Raw content:", content);
+    throw new Error(`Unable to extract valid JSON from LLaMA response. Content length: ${content.length} characters`);
+    
 
   } catch (error) {
     console.error("Together AI API error:", error);
     throw error;
   }
+};
+
+// Task type detection based on prompt content and schema
+const detectTaskType = (prompt, response_json_schema) => {
+  const promptLower = prompt.toLowerCase();
+  const schemaStr = JSON.stringify(response_json_schema).toLowerCase();
+  
+  // Check for financial modeling indicators
+  if (promptLower.includes('financial model') || 
+      promptLower.includes('revenue buildup') ||
+      promptLower.includes('dcf valuation') ||
+      schemaStr.includes('income_statement') ||
+      schemaStr.includes('cash_flow') ||
+      schemaStr.includes('revenue_buildup')) {
+    return 'FINANCIAL_MODELING';
+  }
+  
+  // Check for template generation indicators
+  if (promptLower.includes('template') ||
+      promptLower.includes('excel') ||
+      promptLower.includes('model structure') ||
+      schemaStr.includes('template')) {
+    return 'TEMPLATE_GENERATION';
+  }
+  
+  // Default to case generation
+  return 'CASE_GENERATION';
 };
 
 // Enhanced mock responses for development
@@ -370,7 +445,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { prompt, response_json_schema } = req.body;
+    const { prompt, response_json_schema, task_type } = req.body;
     
     if (!prompt || !response_json_schema) {
       return res.status(400).json({ 
@@ -378,6 +453,9 @@ export default async function handler(req, res) {
       });
     }
 
+    // Auto-detect task type if not provided
+    const detectedTaskType = task_type || detectTaskType(prompt, response_json_schema);
+    
     let response;
     
     if (USE_MOCK) {
@@ -386,8 +464,8 @@ export default async function handler(req, res) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       response = getMockResponse({ prompt, response_json_schema });
     } else {
-      console.log(`Using Together AI LLM for user: ${session.user.id || session.user.email}`);
-      response = await invokeRealLLM({ prompt, response_json_schema });
+      console.log(`Using LLaMA 3.3 70B (${detectedTaskType}) for user: ${session.user.id || session.user.email}`);
+      response = await invokeRealLLM({ prompt, response_json_schema, task_type: detectedTaskType });
     }
     
     return res.status(200).json(response);
