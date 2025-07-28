@@ -261,111 +261,116 @@ const getCasePrompt = (industry) => {
 
 const generateFinancialModelPrompt = (caseData) => {
   const prompt = `
-    You are an elite financial modeling expert. Build a COMPLETE 5-year financial model with DCF valuation based on the following scenario. This must include Excel-like formulas for EVERY calculated line item for educational purposes.
-
-    **SCENARIO DATA:**
-    Company: ${caseData.name}
-    Description: ${caseData.company_description}
+    You are a world-class investment banking MD who builds bullet-proof financial models with institutional-grade validation.
     
-    **STARTING POINT (Year 0):**
-    ${JSON.stringify(caseData.starting_point, null, 2)}
+    **CASE DATA TO USE:**
+    ${JSON.stringify(caseData, null, 2)}
     
-    **GROWTH ASSUMPTIONS:**
-    ${JSON.stringify(caseData.assumptions, null, 2)}
+    Build a complete 5-year financial model using EXACTLY the data above with rigorous multi-tier validation.
 
-    **REQUIRED COMPLETE MODEL STRUCTURE:**
+    **STEP 1: BUILD COMPLETE FINANCIAL MODEL**
 
-    1. **Revenue Buildup Schedule** (5 years):
-       - Customer count progression (starting customers + new acquisitions - churn)
-       - ARPU progression 
-       - Revenue calculation (Customers × ARPU)
-       - Include formula for each calculated field
+    1. **Revenue Buildup** (5 years):
+       - Start with exact customer count from starting_point
+       - Apply customer acquisition and churn rates from assumptions
+       - Calculate ending customers: Beginning + New - Churned
+       - Apply ARPU growth from assumptions
+       - Revenue = Ending Customers × ARPU
+       - Include Excel-style formula for EVERY field
 
-    2. **Depreciation Schedule** (5 years):
-       - Beginning PP&E
-       - CapEx additions
-       - Depreciation expense
-       - Ending PP&E
-       - Include formula for each calculated field
+    2. **Year 0 Starting Point** (Use exact data from case):
+       - Current ARR: ${caseData.starting_point?.current_arr || 'TBD'}
+       - Current Customers: ${caseData.starting_point?.current_customers || 'TBD'}
+       - Current ARPU: Calculate from ARR/customers
+       - Current Gross Margin: ${(caseData.starting_point?.current_gross_margin * 100 || 'TBD')}%
+       - Current OpEx: ${caseData.starting_point?.current_total_opex || 'TBD'}
 
-    3. **Debt Schedule** (if applicable):
-       - Beginning debt balance
-       - Principal payments
-       - Interest expense
-       - Ending debt balance
+    3. **Complete 3-Statement Model**:
+       - **Income Statement**: Revenue → COGS → Gross Profit → OpEx (S&M, R&D, G&A) → EBITDA → D&A → EBIT → Interest → EBT → Tax → Net Income
+       - **Balance Sheet**: Assets (Cash, PP&E, Other) | Liabilities (Debt, Other) | Equity (Retained Earnings progression)
+       - **Cash Flow Statement**: Net Income + D&A - ΔWC - CapEx = Free Cash Flow
 
-    4. **Income Statement** (5 years):
-       - Revenue (from revenue buildup)
-       - Cost of Revenue (based on gross margin)
-       - Gross Profit
-       - Operating Expenses (S&M, R&D, G&A)
-       - EBITDA
-       - Depreciation
-       - EBIT
-       - Interest Expense
-       - EBT (Earnings Before Tax)
-       - Tax Expense
-       - Net Income
-       - Include formula for each calculated field
+    4. **DCF Valuation**:
+       - Unlevered FCF calculation: EBIT × (1-Tax) + D&A - CapEx - ΔWC
+       - Present Value factors using WACC: ${(caseData.assumptions?.financial_assumptions?.wacc * 100 || 'TBD')}%
+       - Terminal Value: FCF_Year5 × (1 + Terminal Growth) / (WACC - Terminal Growth)
+       - Enterprise Value = Sum of PV_FCFs + PV_Terminal_Value
 
-    5. **Balance Sheet** (5 years):
-       - Assets: Cash, PP&E (net), Other Assets
-       - Liabilities: Debt, Other Liabilities  
-       - Equity: Retained Earnings progression
-       - Include formula for each calculated field
-
-    6. **Cash Flow Statement** (5 years):
-       - Net Income
-       - Add: Depreciation
-       - Change in Working Capital
-       - Operating Cash Flow
-       - CapEx
-       - Free Cash Flow
-       - Include formula for each calculated field
-
-    7. **DCF Valuation**:
-       - Unlevered Free Cash Flow calculation
-       - Present Value factors (using WACC)
-       - Present Value of each year's FCF
-       - Terminal Value calculation
-       - Present Value of Terminal Value
-       - Enterprise Value (sum of PVs)
-       - Equity Value (if debt exists)
-       - Include formula for each calculated field
-
-    **TWO-TIER VALIDATION PROCESS:**
-
-    **VP-LEVEL REVIEW - Check these metrics and adjust if needed:**
-    ✓ Revenue growth is sustainable (decreasing over time)
-    ✓ Gross margins remain consistent with SaaS business (75-85%)
-    ✓ Operating margins improve over time but stay realistic
-    ✓ Free cash flow turns positive by Year 3-5
-    ✓ Customer acquisition costs are sustainable
+    **STEP 2: VP-LEVEL REVIEW (Internal Consistency Check)**
     
-    If any red flags appear, revise operational assumptions and recalculate.
+    Act as a VP reviewing this model. Check for red flags and adjust if needed:
+    
+    ✓ **Revenue Growth Sustainability**: Does growth rate decrease over time? (Year 1: ~40%, Year 5: ~15%)
+    ✓ **SaaS Margin Consistency**: Gross margins stable at 75-85%?
+    ✓ **Operating Leverage**: Do operating margins improve but stay realistic? (Start negative, reach 15-25% by Year 5)
+    ✓ **Cash Flow Progression**: Free cash flow positive by Year 3-4?
+    ✓ **Customer Unit Economics**: Is LTV/CAC ratio > 3x?
+    ✓ **Churn Rate Reality**: Annual churn 5-15% for enterprise SaaS?
+    
+    **IF ANY VP-LEVEL CHECK FAILS**: Revise operational assumptions and recalculate before proceeding.
 
-    **MD-LEVEL FINAL VALIDATION - CRITICAL CHECKS:**
-    ✓ IRR Reality Check: Is IRR between 15-25% for SaaS? (NOT 35%+)
-    ✓ Valuation Multiple Check: Is EV/EBITDA reasonable (8-15x for mature SaaS)?
-    ✓ Growth vs. Profitability Trade-off: Does the model show realistic progression?
-    ✓ Tax Rate Check: Is tax correctly applied (EBIT × Tax Rate)?
-    ✓ Terminal Value Sanity: Is terminal growth rate 2-4%?
-    ✓ WACC Appropriateness: Is WACC 8-12% for SaaS?
+    **STEP 3: MD-LEVEL FINAL VALIDATION (CRITICAL)**
+    
+    Act as an MD doing final review before client presentation. Apply rigorous reality checks:
+    
+    🔍 **IRR Reality Check**: 
+    - Is IRR between 15-25% for SaaS business? 
+    - NOT 35%+ (unrealistic) or <12% (too low)
+    - If IRR fails: Lower growth assumptions or increase costs until realistic
+    
+    🔍 **Valuation Multiple Check**:
+    - Calculate EV/Year 5 EBITDA multiple
+    - Should be 8-15x for mature SaaS, NOT 25x+
+    - If multiple too high: Reduce terminal growth or increase WACC
+    
+    🔍 **Growth vs. Profitability Trade-off**:
+    - High growth (>30%) should come with lower margins initially
+    - Mature growth (<20%) should show higher margins (>20%)
+    - Check this progression is realistic
+    
+    🔍 **Financial Mechanics Check**:
+    - Tax rate correctly applied? (EBIT × Tax Rate, not EBT × Tax)
+    - WACC reasonable for SaaS risk profile? (8-12%)
+    - Terminal growth rate conservative? (2-4%, not 5%+)
+    - Working capital assumptions realistic? (Days Sales Outstanding, etc.)
+    
+    🔍 **Business Logic Validation**:
+    - Customer acquisition cost sustainable vs. revenue per customer?
+    - Market penetration realistic vs. TAM assumptions?
+    - Competitive positioning reflected in margin assumptions?
+    
+    **CRITICAL SELF-CORRECTION MECHANISM**:
+    
+    IF ANY MD-LEVEL CHECK FAILS:
+    1. Identify which metric(s) failed validation
+    2. Determine root cause (too aggressive growth, unrealistic margins, etc.)
+    3. Revise core assumptions (lower growth rates, increase cost structure, adjust WACC)
+    4. Recalculate ENTIRE model with revised assumptions
+    5. Re-run ALL validation checks until model passes MD review
+    6. Document what was adjusted and why in validation_status
+    
+    **FORMULA REQUIREMENTS (CRITICAL FOR EDUCATION)**:
+    
+    Every calculated field MUST include Excel-style formula showing logic:
+    - Revenue: "=C5*D5" (Customers × ARPU)
+    - Gross Profit: "=B10-B11" (Revenue - COGS)
+    - EBITDA: "=B12-B13-B14-B15" (Gross Profit - S&M - R&D - G&A)
+    - FCF: "=B20+B21-B22-B23" (Net Income + D&A - CapEx - ΔWC)
+    - PV Factor: "=1/(1+$B$2)^A10" (1/(1+WACC)^Year)
+    - PV of FCF: "=B25*C25" (FCF × PV Factor)
+    
+    Use cell reference style (B10, C15, etc.) and explain the business logic.
 
-    **CRITICAL: If final metrics fail these checks, you MUST revise core assumptions and recalculate the entire model until all validation criteria are met.**
-
-    **FORMULA REQUIREMENTS:**
-    - Every calculated field must include an "Excel-like formula" explanation
-    - Use references like "B15*C20" style notation
-    - Explain the logic: "Revenue = Prior Year Revenue * (1 + Growth Rate)"
-    - This is for educational purposes so users can learn the methodology
-
-    **FINAL OUTPUT REQUIREMENTS:**
-    - NPV/Enterprise Value
-    - IRR (Internal Rate of Return) 
-    - All supporting schedules and statements
-    - Formula explanations for every calculation
-    - Summary metrics that pass MD-level validation
+    **FINAL OUTPUT REQUIREMENTS**:
+    
+    Only output a model that would pass both VP and MD review in a real investment scenario:
+    - NPV/Enterprise Value with realistic IRR (15-25%)
+    - EV/EBITDA multiple in reasonable range (8-15x)
+    - All financial statements with formula transparency
+    - Validation status documenting all checks passed
+    - Conservative terminal value and growth assumptions
+    
+    Remember: This model will be used as the "answer key" for a case study. It must be both educational (with clear formulas) and realistic (passing institutional validation standards).
   `;
 
   const schema = {
@@ -596,12 +601,42 @@ const generateFinancialModelPrompt = (caseData) => {
           },
           validation_status: {
             type: "object",
-            description: "Results of MD-level validation checks",
+            description: "Results of comprehensive VP and MD-level validation checks",
             properties: {
-              irr_check_passed: { type: "boolean" },
-              revenue_growth_realistic: { type: "boolean" },
-              margins_realistic: { type: "boolean" },
-              overall_validation: { type: "string" }
+              vp_level_checks: {
+                type: "object",
+                properties: {
+                  revenue_growth_sustainable: { type: "boolean" },
+                  saas_margins_consistent: { type: "boolean" },
+                  operating_leverage_realistic: { type: "boolean" },
+                  cash_flow_positive_by_year4: { type: "boolean" },
+                  customer_unit_economics_sound: { type: "boolean" },
+                  churn_rate_realistic: { type: "boolean" }
+                }
+              },
+              md_level_checks: {
+                type: "object", 
+                properties: {
+                  irr_within_range: { type: "boolean" },
+                  ev_ebitda_multiple_reasonable: { type: "boolean" },
+                  growth_profitability_balanced: { type: "boolean" },
+                  tax_calculation_correct: { type: "boolean" },
+                  wacc_appropriate: { type: "boolean" },
+                  terminal_growth_conservative: { type: "boolean" }
+                }
+              },
+              adjustments_made: {
+                type: "array",
+                items: { type: "string" },
+                description: "List of adjustments made during validation process"
+              },
+              final_irr: { type: "number" },
+              final_ev_ebitda_multiple: { type: "number" },
+              overall_validation_status: { 
+                type: "string",
+                enum: ["PASSED", "FAILED", "CONDITIONAL"]
+              },
+              md_approval_notes: { type: "string" }
             }
           }
         }
@@ -714,11 +749,60 @@ export default function Generate() {
         assumptions: scenarioResult.assumptions
       };
       
+      // Enhanced financial model generation with institutional validation
       const answerKeyGen = generateFinancialModelPrompt(tempCaseData);
-      const calculationResult = await InvokeLLM({
-        prompt: answerKeyGen.prompt,
-        response_json_schema: answerKeyGen.schema,
-      });
+      console.log('Generating financial model with institutional-grade validation...');
+      
+      // Enhanced error handling for AI model generation
+      let calculationResult;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          attempts++;
+          console.log(`Financial model generation attempt ${attempts}/${maxAttempts}...`);
+          
+          calculationResult = await InvokeLLM({
+            prompt: answerKeyGen.prompt,
+            response_json_schema: answerKeyGen.schema,
+          });
+          
+          // Validate institutional-grade requirements
+          if (!calculationResult.final_metrics?.irr || !calculationResult.final_metrics?.npv) {
+            throw new Error('Missing required IRR/NPV metrics');
+          }
+          
+          // Validate IRR is within realistic range (12-30%, allowing some flexibility)
+          const irr = calculationResult.final_metrics.irr;
+          if (irr < 0.10 || irr > 0.35) {
+            console.warn(`IRR ${(irr * 100).toFixed(1)}% outside realistic range, retrying...`);
+            throw new Error(`IRR ${(irr * 100).toFixed(1)}% outside acceptable range (10-35%)`);
+          }
+          
+          console.log('✅ Financial model passed validation checks');
+          console.log(`Final metrics: IRR ${(irr * 100).toFixed(1)}%, NPV $${(calculationResult.final_metrics.npv / 1000000).toFixed(1)}M`);
+          
+          // Log validation results for debugging
+          if (calculationResult.final_metrics?.validation_status) {
+            console.log('🔍 Model validation results:', calculationResult.final_metrics.validation_status);
+          }
+          
+          break;
+          
+        } catch (modelError) {
+          console.error(`Financial model generation attempt ${attempts} failed:`, modelError);
+          
+          if (attempts === maxAttempts) {
+            throw new Error(`Financial model generation failed after ${maxAttempts} attempts: ${modelError.message}`);
+          }
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      console.log('💎 Answer key generated with institutional validation');
 
       // Step 3: Create case
       setGenerationStep(3);
@@ -765,12 +849,27 @@ export default function Generate() {
 
     } catch (err) {
       console.error("Error generating case:", err);
+      
+      // Enhanced error messaging based on failure type
       let errorMessage = "Failed to generate case. Please try again.";
-      if (err.response?.data?.detail) {
-        errorMessage = `An error occurred: ${err.response.data.detail}`;
+      
+      if (err.message?.includes('IRR')) {
+        errorMessage = 'Financial model validation failed: IRR outside realistic range. Our AI is learning - please try again for a more realistic model.';
+      } else if (err.message?.includes('Missing required')) {
+        errorMessage = 'Financial model incomplete: Missing critical metrics. Please try again.';
+      } else if (err.message?.includes('after 3 attempts')) {
+        errorMessage = 'AI model generation failed after multiple attempts. Our system is being refined - please try again in a few moments.';
+      } else if (err.message?.includes('User')) {
+        errorMessage = 'User validation failed. Please refresh the page and try again.';
+      } else if (err.message?.includes('Insufficient credits')) {
+        errorMessage = 'Insufficient credits remaining. Please upgrade your plan to continue.';
+        setShowUpgradeModal(true);
+      } else if (err.response?.data?.detail) {
+        errorMessage = `Generation failed: ${err.response.data.detail}`;
       } else if (err.message) {
-        errorMessage = `An error occurred: ${err.message}`;
+        errorMessage = `Generation failed: ${err.message}`;
       }
+      
       setError(errorMessage);
       setIsGenerating(false);
       setGenerationStep(0);
