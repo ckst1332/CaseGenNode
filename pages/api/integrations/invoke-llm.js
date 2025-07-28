@@ -171,14 +171,20 @@ Respond with JSON only:
         requestBodyKeys: Object.keys(requestBody)
       });
       
-      // Specific handling for 422 errors
+      // Specific handling for 422 errors (token limit issues)
       if (response.status === 422) {
-        console.error(`422 Error likely due to:`, {
+        console.error(`422 Error likely due to token limits:`, {
           modelName: requestBody.model,
           maxTokens: requestBody.max_tokens,
           hasMessages: !!requestBody.messages,
-          messageCount: requestBody.messages?.length || 0
+          messageCount: requestBody.messages?.length || 0,
+          errorBody: errorText
         });
+        
+        // Check if it's a token limit error and suggest fix
+        if (errorText.includes('tokens + `max_new_tokens` must be <=')) {
+          throw new Error(`Token limit exceeded. The model has a maximum context of 8193 tokens. Try reducing prompt complexity or use a shorter case description.`);
+        }
       }
       
       throw new Error(`Together AI API error: ${response.status} ${response.statusText} - ${errorText}`);
