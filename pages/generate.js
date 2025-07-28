@@ -214,9 +214,17 @@ export default function Generate() {
         }
       };
 
-      // Validate case realism
-      const caseValidation = validateCaseRealism(scenarioResult);
+      // Validate case realism (VP/MD Level)
+      const caseValidation = validateCaseRealism(calculationResult);
       if (!caseValidation.isRealistic) {
+        console.error("Case generation errors:", caseValidation.errors);
+        setError(`VP/MD Review Failed: ${caseValidation.errors.join('. ')}. Regenerating with more realistic assumptions.`);
+        setIsGenerating(false);
+        setGenerationStep(0);
+        return;
+      }
+      
+      if (caseValidation.warnings.length > 0) {
         console.warn("Case generation warnings:", caseValidation.warnings);
       }
 

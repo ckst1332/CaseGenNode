@@ -165,7 +165,7 @@ export default function CaseDetail() {
   return (
     <Layout currentPageName="Case">
       <div className="min-h-screen bg-gray-50">
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+        <div className="p-4 lg:p-6 mx-4 lg:mx-8">
           <Link href="/cases" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6">
             <ArrowLeft className="w-4 h-4" />
             Back to Cases
