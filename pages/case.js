@@ -214,8 +214,84 @@ export default function CaseDetail() {
             </div>
           </div>
 
-          {/* Main Content - Single Column */}
-          <div className="space-y-6">
+          {/* Main Content Grid */}
+          <div className="grid lg:grid-cols-4 gap-6">
+            
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Case Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Case Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    onClick={handleTemplateDownload}
+                    disabled={downloadingTemplate}
+                    className="w-full"
+                    variant="outline"
+                    size="sm"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Download Template
+                  </Button>
+                  
+                  {caseData.status === 'completed' && (
+                    <Button 
+                      onClick={handleDownloadSolution}
+                      disabled={downloadingSolution}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Solution
+                    </Button>
+                  )}
+
+                  <Separator className="my-4" />
+                  
+                  <p className="text-xs text-slate-600">
+                    Use the template to build your financial model, then compare with the solution.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Case Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Case Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Type</span>
+                    <span className="font-semibold text-slate-900 text-sm">{caseData.type || 'DCF'}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Industry</span>
+                    <span className="font-semibold text-slate-900 text-sm">{caseData.industry}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Created</span>
+                    <span className="font-semibold text-slate-900 text-sm">
+                      {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Status</span>
+                    <Badge className={statusConfig.className} variant="secondary">
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig.text}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="lg:col-span-3 space-y-6">
           {/* Company Information - Always Visible */}
           <Card>
             <CardHeader>
@@ -388,6 +464,8 @@ export default function CaseDetail() {
                 </CardContent>
               </Card>
             )}
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
