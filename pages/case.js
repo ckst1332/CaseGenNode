@@ -73,9 +73,8 @@ export default function CaseDetail() {
     }
   }, [session, status, router, id]);
 
-  // No aggressive auto-refresh - only load when component mounts or id changes
-
   const loadCase = async () => {
+    if (!id) return; // Prevent loading if no ID
     setIsLoading(true);
     try {
       const data = await Case.get(id);
@@ -165,54 +164,61 @@ export default function CaseDetail() {
 
   return (
     <Layout currentPageName="Case">
-      <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-        <Link href="/cases" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Cases
-        </Link>
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+          <Link href="/cases" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Cases
+          </Link>
 
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">{caseData.name}</h1>
-              <div className="flex items-center gap-4">
-                <Badge className={statusConfig.className}>
-                  <StatusIcon className="w-3 h-3 mr-1" />
-                  {statusConfig.text}
-                </Badge>
-                <span className="text-slate-600">{caseData.industry}</span>
-                <span className="text-slate-600">
-                  Created {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
-                </span>
+          {/* Header Section */}
+          <div className="mb-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+              <div className="flex-1">
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-2">{caseData.name}</h1>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Badge className={statusConfig.className}>
+                    <StatusIcon className="w-3 h-3 mr-1" />
+                    {statusConfig.text}
+                  </Badge>
+                  <span className="text-slate-600">{caseData.industry}</span>
+                  <span className="text-slate-600">
+                    Created {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  onClick={handleTemplateDownload}
+                  disabled={downloadingTemplate}
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  {downloadingTemplate ? 'Downloading...' : 'Template'}
+                </Button>
+                
+                {caseData.status === 'completed' && (
+                  <Button 
+                    onClick={handleDownloadSolution}
+                    disabled={downloadingSolution}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {downloadingSolution ? 'Downloading...' : 'Solution'}
+                  </Button>
+                )}
               </div>
             </div>
-            
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleTemplateDownload}
-                disabled={downloadingTemplate}
-                variant="outline"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                {downloadingTemplate ? 'Downloading...' : 'Download Template'}
-              </Button>
-              
-              {caseData.status === 'completed' && (
-                <Button 
-                  onClick={handleDownloadSolution}
-                  disabled={downloadingSolution}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {downloadingSolution ? 'Downloading...' : 'Download Solution'}
-                </Button>
-              )}
-            </div>
           </div>
-        </div>
 
-        {/* Workflow-based Content */}
-        <div className="space-y-6">
+          {/* Main Content Grid */}
+          <div className="grid lg:grid-cols-4 gap-6">
+            
+            {/* Main Content Area */}
+            <div className="lg:col-span-3 space-y-6">
           {/* Company Information - Always Visible */}
           <Card>
             <CardHeader>
@@ -283,9 +289,6 @@ export default function CaseDetail() {
           )}
         </div>
 
-        {/* Sidebar with Case Details and Quick Actions */}
-        <div className="grid lg:grid-cols-4 gap-6 mt-8">
-          <div className="lg:col-span-3 space-y-6">
             {/* Enhanced Starting Point and Assumptions */}
             {(caseData.starting_point || caseData.year_0_baseline) && (
               <Card>
@@ -298,19 +301,21 @@ export default function CaseDetail() {
                 <CardContent className="space-y-6">
                   {/* Year 0 Baseline Data */}
                   <div>
-                    <h4 className="font-medium text-slate-700 mb-3">📊 Starting Point (Year 0)</h4>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                      📊 Starting Point (Year 0)
+                    </h4>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                       {Object.entries(caseData.starting_point || caseData.year_0_baseline?.operational_metrics || {}).map(([key, value]) => (
-                        <div key={key} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border">
-                          <span className="text-sm font-medium text-slate-600 capitalize">
+                        <div key={key} className="p-3 bg-slate-50 rounded-lg border text-center">
+                          <div className="text-xs text-slate-600 mb-1 capitalize">
                             {key.replace(/_/g, ' ')}
-                          </span>
-                          <span className="font-semibold text-slate-900">
+                          </div>
+                          <div className="font-semibold text-slate-900 text-sm">
                             {typeof value === 'number' ? 
                               (key.includes('margin') || key.includes('rate') || key.includes('percent') ? 
                                 `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
                               value}
-                          </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -319,20 +324,20 @@ export default function CaseDetail() {
                   {/* Operational Assumptions */}
                   {caseData.assumptions?.operational_drivers && (
                     <div>
-                      <h4 className="font-medium text-slate-700 mb-3">🚀 Operational Growth Drivers</h4>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                        🚀 Operational Growth Drivers
+                      </h4>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         {Object.entries(caseData.assumptions.operational_drivers).map(([key, value]) => (
                           <div key={key} className="p-3 bg-green-50 rounded-lg border border-green-200">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium text-green-700 capitalize">
-                                {key.replace(/_/g, ' ')}
-                              </span>
-                              <span className="text-sm font-semibold text-green-800">
-                                {Array.isArray(value) ? 
-                                  `Years 1-5: ${value.join(', ')}` : 
-                                  (typeof value === 'number' && key.includes('rate') ? 
-                                    `${(value * 100).toFixed(1)}%` : value)}
-                              </span>
+                            <div className="text-xs font-medium text-green-700 capitalize mb-1">
+                              {key.replace(/_/g, ' ')}
+                            </div>
+                            <div className="text-sm font-semibold text-green-800">
+                              {Array.isArray(value) ? 
+                                `${value.slice(0, 3).join(', ')}${value.length > 3 ? '...' : ''}` : 
+                                (typeof value === 'number' && key.includes('rate') ? 
+                                  `${(value * 100).toFixed(1)}%` : value)}
                             </div>
                           </div>
                         ))}
@@ -389,74 +394,80 @@ export default function CaseDetail() {
             )}
           </div>
 
-          {/* Action Panel */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Case Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  onClick={handleTemplateDownload}
-                  disabled={downloadingTemplate}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Download Template
-                </Button>
-                
-                {caseData.status === 'completed' && (
+            </div>
+          
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Case Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Case Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <Button 
-                    onClick={handleDownloadSolution}
-                    disabled={downloadingSolution}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={handleTemplateDownload}
+                    disabled={downloadingTemplate}
+                    className="w-full"
+                    variant="outline"
+                    size="sm"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Solution
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Download Template
                   </Button>
-                )}
+                  
+                  {caseData.status === 'completed' && (
+                    <Button 
+                      onClick={handleDownloadSolution}
+                      disabled={downloadingSolution}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Solution
+                    </Button>
+                  )}
 
-                <Separator className="my-4" />
-                
-                <p className="text-sm text-slate-600">
-                  Use the template to build your financial model, then compare with the solution.
-                </p>
-              </CardContent>
-            </Card>
+                  <Separator className="my-4" />
+                  
+                  <p className="text-xs text-slate-600">
+                    Use the template to build your financial model, then compare with the solution.
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Case Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Case Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-600">Type</span>
-                  <span className="font-semibold text-slate-900">{caseData.type || 'DCF'}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-600">Industry</span>
-                  <span className="font-semibold text-slate-900">{caseData.industry}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-600">Created</span>
-                  <span className="font-semibold text-slate-900">
-                    {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-600">Status</span>
-                  <Badge className={statusConfig.className}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {statusConfig.text}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Case Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Case Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Type</span>
+                    <span className="font-semibold text-slate-900 text-sm">{caseData.type || 'DCF'}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Industry</span>
+                    <span className="font-semibold text-slate-900 text-sm">{caseData.industry}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Created</span>
+                    <span className="font-semibold text-slate-900 text-sm">
+                      {safeDate(caseData.created_at || caseData.created_date, 'Recently')}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-600">Status</span>
+                    <Badge className={statusConfig.className} variant="secondary">
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig.text}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
