@@ -17,12 +17,26 @@ Your CaseGen application now uses Meta's LLaMA 3.3 70B Instruct Turbo model for 
 
 ## 🚀 Key Enhancements Made
 
-### **1. Advanced Model Configuration**
+### **1. Comprehensive 3-Statement Financial Modeling**
+- **Income Statement**: Complete P&L from Revenue to Net Income with all standard line items
+- **Balance Sheet**: Full balance sheet with Assets = Liabilities + Equity validation
+- **Cash Flow Statement**: Operating, Investing, and Financing activities with proper categorization
+- **Year 0 Baseline**: Starting point data for all financial statements
+- **Statement Interconnections**: Proper flow of Net Income, Working Capital, and Cash balances
+
+### **2. Advanced Model Configuration**
 - **Dynamic Task Detection**: Automatically optimizes parameters based on task type
 - **Task-Specific Settings**: Different configurations for case generation vs financial modeling
 - **Enhanced JSON Parsing**: Multiple extraction methods for robust LLaMA output handling
 
-### **2. Optimized Parameters**
+### **3. Enhanced CSV Output Format**
+- **Transposed Layout**: Metrics as rows, years as columns (matching industry standards)
+- **Year 0 Column**: Reference baseline for all projections
+- **Terminal Values**: 3% terminal growth assumption with steady-state metrics
+- **Formula Column**: Business logic explanations for each line item
+- **Professional Format**: "($ in thousands)" header with proper number formatting
+
+### **4. Optimized Parameters**
 
 #### Case Generation
 ```javascript
@@ -47,12 +61,12 @@ max_tokens: 5000        // Moderate for templates
 top_p: 0.92            // Balance creativity and structure
 ```
 
-### **3. Enhanced Prompt Engineering**
+### **5. Enhanced Prompt Engineering**
 - **Institutional-Grade Instructions**: Prompts optimized for LLaMA's reasoning capabilities
 - **Multi-Tier Validation**: VP and MD-level review instructions
 - **SaaS Expertise**: Leverages LLaMA's knowledge of real companies (Salesforce, HubSpot, Zoom)
 
-### **4. Robust Error Handling**
+### **6. Robust Error Handling**
 - **Multiple JSON Extraction Methods**: Handles markdown formatting, text wrapping
 - **Brace Counting Algorithm**: Extracts valid JSON from complex responses
 - **Automatic Recovery**: Falls back gracefully when parsing fails
@@ -115,21 +129,31 @@ Multiple parsing methods ensure reliable output:
 
 ## 🎮 Usage Examples
 
+### **3-Statement Model Generation Request**
+```javascript
+const response = await InvokeLLM({
+  prompt: "Create a comprehensive 3-statement model with Year 0 baseline...",
+  response_json_schema: threeStatementSchema,
+  task_type: "FINANCIAL_MODELING"  // Optional - auto-detected
+});
+```
+
+### **Enhanced CSV Output Format**
+```csv
+"Income Statement with Year 0 Baseline"
+"($ in thousands)","Year 0","Year 1","Year 2","Year 3","Terminal","Formula"
+"Revenue","8,000","10,000","13,500","17,550","18,077","Prior Year × (1 + Growth Rate)"
+"Gross Profit","6,800","8,500","11,475","14,918","15,366","Revenue × Gross Margin"
+"Ebitda","2,000","2,500","3,375","3,860","3,976","Revenue × EBITDA Margin"
+"Net Income","1,200","1,485","2,051","2,737","2,819","EBITDA - D&A - Interest - Taxes"
+```
+
 ### **Case Generation Request**
 ```javascript
 const response = await InvokeLLM({
   prompt: "Create a SaaS DCF case study...",
   response_json_schema: caseSchema,
   task_type: "CASE_GENERATION"  // Optional - auto-detected
-});
-```
-
-### **Financial Modeling Request**  
-```javascript
-const response = await InvokeLLM({
-  prompt: "Build a comprehensive financial model...",
-  response_json_schema: modelSchema,
-  task_type: "FINANCIAL_MODELING"  // Optional - auto-detected
 });
 ```
 

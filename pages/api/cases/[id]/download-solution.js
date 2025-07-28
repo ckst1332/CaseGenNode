@@ -1,5 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]";
+import { supabaseStorage } from "../../../../lib/supabase";
+import { generateFullModelXlsx } from "../../../../lib/utils/data-processing";
 
 export default async function handler(req, res) {
   try {
@@ -10,22 +12,48 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query;
+    const { format = 'xlsx' } = req.query; // Default to XLSX, allow CSV for backward compatibility
     
     if (req.method === 'GET') {
-      // In a real implementation, this would generate an Excel file with solutions
-      // For now, return a mock CSV response with completed calculations
-      const csvContent = `Year,Revenue,Operating Expenses,EBITDA,Free Cash Flow,NPV,IRR
-0,1000000,800000,200000,150000,,
-1,1400000,1000000,400000,350000,304348,
-2,1960000,1300000,660000,590000,466172,
-3,2744000,1600000,1144000,1050000,735294,
-4,3841600,1950000,1891600,1750000,1063830,
-5,5377240,2340000,3037240,2800000,1488372,
-Total NPV,,,,4058016,4058016,22.5%`;
+      // Get case data from database
+      const caseData = await supabaseStorage.getCase(id);
+      
+      if (!caseData) {
+        return res.status(404).json({ error: "Case not found" });
+      }
 
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="case_${id}_solution.csv"`);
-      return res.status(200).send(csvContent);
+      // Verify user owns this case
+      if (caseData.user_id !== session.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (format === 'xlsx') {
+        // Generate professional XLSX file
+        const workbook = await generateFullModelXlsx(caseData);
+        
+        if (!workbook) {
+          return res.status(400).json({ error: "Unable to generate Excel file" });
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const filename = `${caseData.company_name || `case_${id}`}_solution.xlsx`;
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', buffer.length);
+        
+        return res.status(200).send(buffer);
+      } else {
+        // Fallback to CSV format
+        const { generateFullModelCsv } = await import("../../../../lib/utils/data-processing");
+        const csvContent = generateFullModelCsv(caseData);
+        const filename = `${caseData.company_name || `case_${id}`}_solution.csv`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        
+        return res.status(200).send(csvContent);
+      }
     }
     
     return res.status(405).json({ error: "Method not allowed" });
