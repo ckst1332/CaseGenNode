@@ -218,50 +218,44 @@ export default function CaseDetail() {
           <div className="grid lg:grid-cols-4 gap-6">
             
             {/* Sidebar */}
-            <div className="lg:col-span-1 space-y-4">
+            <div className="lg:col-span-1 space-y-6">
               {/* Case Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Case Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Case Actions</h2>
+                
+                <Button 
+                  onClick={handleTemplateDownload}
+                  disabled={downloadingTemplate}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Download Template
+                </Button>
+                
+                {caseData.status === 'completed' && (
                   <Button 
-                    onClick={handleTemplateDownload}
-                    disabled={downloadingTemplate}
-                    className="w-full"
-                    variant="outline"
+                    onClick={handleDownloadSolution}
+                    disabled={downloadingSolution}
+                    className="w-full bg-green-600 hover:bg-green-700"
                     size="sm"
                   >
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Download Template
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Solution
                   </Button>
-                  
-                  {caseData.status === 'completed' && (
-                    <Button 
-                      onClick={handleDownloadSolution}
-                      disabled={downloadingSolution}
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      size="sm"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Solution
-                    </Button>
-                  )}
-
-                  <Separator className="my-4" />
-                  
-                  <p className="text-xs text-slate-600">
-                    Use the template to build your financial model, then compare with the solution.
-                  </p>
-                </CardContent>
-              </Card>
+                )}
+                
+                <p className="text-xs text-slate-600">
+                  Use the template to build your financial model, then compare with the solution.
+                </p>
+              </div>
 
               {/* Case Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Case Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Case Details</h2>
+                
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-medium text-slate-600">Type</span>
                     <span className="font-semibold text-slate-900 text-sm">{caseData.type || 'DCF'}</span>
@@ -286,12 +280,12 @@ export default function CaseDetail() {
                       {statusConfig.text}
                     </Badge>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Main Content Area */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 w-full">
           {/* Company Information - Always Visible */}
           <Card>
             <CardHeader>
