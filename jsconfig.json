@@ -2,9 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/api/*": ["./src/api/*", "./lib/api/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/utils/*": ["./src/utils/*", "./lib/utils/*"]
     },
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*.js", "src/**/*.jsx"]
+  "include": ["src/**/*.js", "src/**/*.jsx", "lib/**/*.js", "pages/**/*.js"]
 } 
