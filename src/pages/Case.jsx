@@ -119,7 +119,7 @@ export default function CasePage() {
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="mb-6">
-        <Button variant="outline" onClick={() => navigate(createPageUrl("Cases"))} className="mb-4">
+        <Button variant="outline" onClick={() => window.location.href = "/cases"} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Cases
         </Button>

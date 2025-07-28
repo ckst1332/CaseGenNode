@@ -627,10 +627,11 @@ export default function Generate() {
       // Decrement user credits
       await User.updateMyUserData({ credits_remaining: (user.credits_remaining || 0) - 1 });
 
-      // Step 4: Navigate to the newly created case
+      // Step 4: Navigate to the newly created case (Next.js routing)
       setGenerationStep(4); 
       setTimeout(() => {
-        navigate(createPageUrl(`Case?id=${newCase.id}`));
+        // Use window.location for cross-routing compatibility
+        window.location.href = `/case?id=${newCase.id}`;
       }, 1000);
 
     } catch (err) {
@@ -707,7 +708,7 @@ export default function Generate() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Maybe Later</AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate(createPageUrl("Account"))}>
+            <AlertDialogAction onClick={() => window.location.href = "/account"}>
               Go Basic – $12/mo
             </AlertDialogAction>
           </AlertDialogFooter>
