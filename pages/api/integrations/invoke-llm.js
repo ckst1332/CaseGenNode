@@ -6,18 +6,26 @@ import { LLAMA_MODEL_CONFIG, LLAMA_PROMPT_GUIDELINES } from "../../../lib/ai/lla
 const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
 const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
 
-// Free tier rate limiting configuration
+// Production rate limiting for Together AI free tier
 const RATE_LIMIT = {
-  maxRequestsPerMinute: 10,  // Conservative limit for free tier
-  minDelayBetweenRequests: 6000, // 6 seconds between requests
-  maxRetries: 3,
-  retryDelayBase: 2000 // Start with 2 second delays
+  maxRequestsPerMinute: 4,   // Conservative limit for free tier
+  minDelayBetweenRequests: 20000, // 20 seconds between requests
+  maxRetries: 1,             // Single retry if needed
+  retryDelayBase: 10000      // 10 second retry delay
 };
 
-// Request tracking for rate limiting
+// Request tracking for rate limiting (persistent across API calls)
 let lastRequestTime = 0;
 let requestCount = 0;
 let requestTimes = [];
+let totalRequestsToday = 0;
+let lastResetDate = new Date().toDateString();
+
+// Circuit breaker for persistent 429 errors
+let consecutiveErrors = 0;
+let lastErrorTime = 0;
+const MAX_CONSECUTIVE_ERRORS = 3;
+const CIRCUIT_BREAKER_TIMEOUT = 300000; // 5 minutes
 
 // Fallback to mock for development if no API key
 const USE_MOCK = !TOGETHER_API_KEY;
@@ -25,6 +33,35 @@ const USE_MOCK = !TOGETHER_API_KEY;
 // Rate limiting helper functions
 const waitForRateLimit = async () => {
   const now = Date.now();
+  const today = new Date().toDateString();
+  
+  // Check circuit breaker
+  if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+    const timeSinceLastError = now - lastErrorTime;
+    if (timeSinceLastError < CIRCUIT_BREAKER_TIMEOUT) {
+      const waitTime = CIRCUIT_BREAKER_TIMEOUT - timeSinceLastError;
+      console.log(`🚨 Circuit breaker active. Too many 429 errors. Wait ${Math.round(waitTime/1000/60)} minutes.`);
+      throw new Error(`Circuit breaker active. Too many rate limit errors. Please wait ${Math.round(waitTime/1000/60)} minutes before trying again.`);
+    } else {
+      // Reset circuit breaker
+      consecutiveErrors = 0;
+      console.log('Circuit breaker reset');
+    }
+  }
+  
+  // Reset daily counter
+  if (today !== lastResetDate) {
+    totalRequestsToday = 0;
+    lastResetDate = today;
+    console.log('Daily request counter reset');
+  }
+  
+  // Check daily limit (testing - more reasonable for debugging)
+  if (totalRequestsToday >= 50) {
+    console.log('⚠️  Daily request limit reached (50). Please try again tomorrow.');
+    throw new Error('Daily request limit reached (50 requests max). Please try again tomorrow.');
+  }
+  
   const timeSinceLastRequest = now - lastRequestTime;
   
   // Clean old request times (older than 1 minute)
@@ -40,7 +77,7 @@ const waitForRateLimit = async () => {
   // Check requests per minute limit
   if (requestTimes.length >= RATE_LIMIT.maxRequestsPerMinute) {
     const oldestRequest = requestTimes[0];
-    const waitTime = 60000 - (now - oldestRequest) + 1000; // Add 1 second buffer
+    const waitTime = 60000 - (now - oldestRequest) + 5000; // Add 5 second buffer
     if (waitTime > 0) {
       console.log(`Rate limiting: waiting ${waitTime}ms due to requests per minute limit`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -50,19 +87,24 @@ const waitForRateLimit = async () => {
   // Update tracking
   lastRequestTime = Date.now();
   requestTimes.push(lastRequestTime);
+  totalRequestsToday++;
+  console.log(`Request ${totalRequestsToday}/50 for today (TESTING CONNECTION)`);
 };
 
 const makeRequestWithRetry = async (requestFn, retryCount = 0) => {
   try {
     await waitForRateLimit();
-    return await requestFn();
+    const result = await requestFn();
+    // Reset consecutive errors on success
+    consecutiveErrors = 0;
+    return result;
   } catch (error) {
     // Handle 429 rate limit errors specifically
-    if (error.message?.includes('429') && retryCount < RATE_LIMIT.maxRetries) {
-      const waitTime = RATE_LIMIT.retryDelayBase * Math.pow(2, retryCount); // Exponential backoff
-      console.log(`429 Rate limit hit, waiting ${waitTime}ms before retry ${retryCount + 1}/${RATE_LIMIT.maxRetries}`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      return makeRequestWithRetry(requestFn, retryCount + 1);
+    if (error.message?.includes('429')) {
+      consecutiveErrors++;
+      lastErrorTime = Date.now();
+      console.log(`❌ 429 Error #${consecutiveErrors}. No retries to avoid further rate limiting.`);
+      throw new Error(`Rate limit exceeded. Request denied to avoid further 429 errors. Please wait at least 1 minute before trying again.`);
     }
     throw error;
   }
@@ -87,6 +129,27 @@ ${JSON.stringify(response_json_schema, null, 2)}
 Respond with JSON only:
 `;
 
+    const requestBody = {
+      model: LLAMA_MODEL_CONFIG.MODEL_NAME,
+      messages: [
+        {
+          role: "system",
+          content: LLAMA_PROMPT_GUIDELINES.SYSTEM_ROLE.financial_expert
+        },
+        {
+          role: "user",
+          content: enhancedPrompt
+        }
+      ],
+      temperature: LLAMA_MODEL_CONFIG[task_type].temperature,
+      max_tokens: LLAMA_MODEL_CONFIG[task_type].max_tokens,
+      top_p: LLAMA_MODEL_CONFIG[task_type].top_p,
+      frequency_penalty: LLAMA_MODEL_CONFIG[task_type].frequency_penalty,
+      presence_penalty: LLAMA_MODEL_CONFIG[task_type].presence_penalty
+    };
+
+    console.log(`Request body for ${task_type}:`, JSON.stringify(requestBody, null, 2));
+
     const response = await makeRequestWithRetry(async () => {
       return fetch(`${TOGETHER_BASE_URL}/chat/completions`, {
         method: 'POST',
@@ -94,25 +157,31 @@ Respond with JSON only:
           'Authorization': `Bearer ${TOGETHER_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: LLAMA_MODEL_CONFIG.MODEL_NAME,
-          messages: [
-            {
-              role: "system",
-              content: LLAMA_PROMPT_GUIDELINES.SYSTEM_ROLE.financial_expert
-            },
-            {
-              role: "user",
-              content: enhancedPrompt
-            }
-          ],
-          ...LLAMA_MODEL_CONFIG[task_type]
-        })
+        body: JSON.stringify(requestBody)
       });
     });
 
     if (!response.ok) {
-      throw new Error(`Together AI API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`🚨 Together AI API error details:`, {
+        status: response.status,
+        statusText: response.statusText,
+        model: LLAMA_MODEL_CONFIG.MODEL_NAME,
+        body: errorText,
+        requestBodyKeys: Object.keys(requestBody)
+      });
+      
+      // Specific handling for 422 errors
+      if (response.status === 422) {
+        console.error(`422 Error likely due to:`, {
+          modelName: requestBody.model,
+          maxTokens: requestBody.max_tokens,
+          hasMessages: !!requestBody.messages,
+          messageCount: requestBody.messages?.length || 0
+        });
+      }
+      
+      throw new Error(`Together AI API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -322,6 +391,16 @@ const detectTaskType = (prompt, response_json_schema) => {
 
 // Enhanced mock responses for development
 const getMockResponse = ({ prompt, response_json_schema }) => {
+  // Handle simple test schema
+  if (response_json_schema?.properties?.test_status) {
+    return {
+      company_name: "MockSaaS Inc",
+      company_description: "A test SaaS company generated by mock API to verify the system works without external API calls",
+      revenue: 2500000,
+      test_status: "Mock API Connection Successful - No 429 Errors"
+    };
+  }
+  
   if (response_json_schema?.properties?.company_name) {
     // Company scenario generation
     return {
@@ -619,13 +698,24 @@ export default async function handler(req, res) {
     
     let response;
     
-    if (USE_MOCK) {
-      console.log(`Using mock LLM for user: ${session.user.id || session.user.email} (no TOGETHER_API_KEY)`);
+    // Debug API key availability
+    console.log(`API Key Status: ${TOGETHER_API_KEY ? 'PRESENT' : 'MISSING'}`);
+    console.log(`USE_MOCK: ${USE_MOCK}`);
+    
+    // 🚨 EMERGENCY: FORCE MOCK MODE - BYPASS ALL API CALLS
+    const FORCE_MOCK_FOR_TESTING = true;
+    const EMERGENCY_MOCK_MODE = true;
+    console.log(`🚨 EMERGENCY MOCK MODE ACTIVE - NO API CALLS SHOULD HAPPEN`);
+    console.log(`🧪 FORCE_MOCK_FOR_TESTING: ${FORCE_MOCK_FOR_TESTING}`);
+    
+    if (USE_MOCK || FORCE_MOCK_FOR_TESTING || EMERGENCY_MOCK_MODE) {
+      console.log(`🎭 EMERGENCY: Using mock LLM for user: ${session.user.id || session.user.email}`);
+      console.log(`🚨 THIS SHOULD NOT CALL TOGETHER AI API AT ALL`);
       // Add realistic delay for mock
       await new Promise(resolve => setTimeout(resolve, 1500));
       response = getMockResponse({ prompt, response_json_schema });
     } else {
-      console.log(`Using LLaMA 3.3 70B (${detectedTaskType}) for user: ${session.user.id || session.user.email}`);
+      console.log(`🚀 Using LLaMA 3.3-70B Turbo (${detectedTaskType}) for user: ${session.user.id || session.user.email}`);
       response = await invokeRealLLM({ prompt, response_json_schema, task_type: detectedTaskType });
     }
     

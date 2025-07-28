@@ -17,16 +17,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Import advanced AI logic
-import { getCasePrompt, validateCaseRealism } from '../lib/ai/case-prompts';
-import { generateFinancialModelPrompt, validateFinancialModel } from '../lib/ai/financial-model-prompts';
+// Import AI logic - OPTIMIZED FOR SINGLE API CALL
+import { validateCaseRealism } from '../lib/ai/case-prompts';
+import { validateFinancialModel } from '../lib/ai/financial-model-prompts';
 import { getCombinedCaseAndModelPrompt } from '../lib/ai/combined-prompts';
 import { generateFullModelCsv, downloadCsv } from '../lib/utils/data-processing';
 
 // Import standardized API client
 import { Case, User, InvokeLLM, withRetry } from '../lib/api/client';
 
-export default function GenerateEnhanced() {
+export default function Generate() {
   const router = useRouter();
   const { data: session } = useSession();
   
@@ -97,6 +97,8 @@ export default function GenerateEnhanced() {
     generateCase();
   };
 
+  // ⚠️  CRITICAL: This function uses SINGLE API call to prevent 429 errors
+  // DO NOT split into multiple InvokeLLM calls - causes rate limiting issues
   const generateCase = async () => {
     setIsGenerating(true);
     setError(null);
@@ -104,18 +106,27 @@ export default function GenerateEnhanced() {
     const industry = "Technology (SaaS)";
 
     try {
-      // Single API call for both case scenario and financial model (rate limit optimization)
+      // ✅ OPTIMIZED: Single API call for both case scenario and financial model
+      // This prevents 429 rate limit errors by consolidating requests
       setGenerationStep(1);
-      console.log("🚀 Generating complete case and model in single LLaMA request...");
+      console.log("🚀 Generating complete case and model in SINGLE LLaMA request...");
+      console.log("🎯 Using combined prompt to avoid multiple API calls");
       
+      // ✅ PRODUCTION: Single API call for both case scenario and financial model
       const combinedPrompt = getCombinedCaseAndModelPrompt(industry);
+      
+      console.log("🚀 PRODUCTION: Using combined prompt for complete case generation");
+      
+      // Single consolidated API call - NO multiple requests
       const completeResult = await withRetry(() => InvokeLLM({
         prompt: combinedPrompt.prompt,
         response_json_schema: combinedPrompt.schema,
-        task_type: 'FINANCIAL_MODELING' // Use financial modeling config for comprehensive output
-      }), 2, 3000); // Increased retry delay for larger response
+        task_type: 'FINANCIAL_MODELING' // Use financial modeling config
+      }), 2, 5000); // Retry delay for comprehensive response
+      
+      console.log("✅ Single API call completed successfully");
 
-      // Extract scenario and calculation data from combined result
+      // ✅ PRODUCTION: Extract scenario and calculation data from combined result
       const scenarioResult = {
         company_name: completeResult.company_name,
         company_description: completeResult.company_description,
@@ -250,10 +261,11 @@ export default function GenerateEnhanced() {
           </div>
 
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
-            Generate New Case
+            🚨 EMERGENCY MOCK MODE - Generate New Case
           </h1>
           <p className="text-slate-600 text-lg mb-8">
             Create a new, realistic DCF modeling challenge for a SaaS company with advanced AI validation.
+            <br /><span className="text-sm text-green-600 font-medium">✅ Optimized with single API call to prevent rate limits</span>
           </p>
 
           {error && (
