@@ -261,7 +261,7 @@ export default function Generate() {
           </div>
 
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
-            🚨 EMERGENCY MOCK MODE - Generate New Case
+            Generate New Case
           </h1>
           <p className="text-slate-600 text-lg mb-8">
             Create a new, realistic DCF modeling challenge for a SaaS company with advanced AI validation.
