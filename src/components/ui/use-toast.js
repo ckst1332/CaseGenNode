@@ -1,4 +1,4 @@
-// Inspired by react-hot-toast library
+// Toast notification utility
 import { useState, useEffect, createContext, useContext } from "react";
 
 const TOAST_LIMIT = 20;

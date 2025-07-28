@@ -27,43 +27,8 @@ import ResultsEntry from "../src/components/case/ResultsEntry";
 import ResultsComparison from "../src/components/case/ResultsComparison";
 import DetailedModelDownload from "../src/components/case/DetailedModelDownload";
 
-// API Client
-const apiClient = {
-  request: async (path, options = {}) => {
-    try {
-      const response = await fetch(`/api${path}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        },
-        ...options
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
-      }
-      
-      if (response.status === 204) return null;
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
-};
-
-const Case = {
-  get: (id) => apiClient.request(`/cases/${id}`),
-  downloadTemplate: (id) => apiClient.request(`/cases/${id}/download-template`),
-  downloadSolution: (id) => apiClient.request(`/cases/${id}/download-solution`),
-};
+// Import centralized API client
+import { Case } from '../lib/api/client';
 
 const getStatusConfig = (status) => {
   const configs = {
@@ -138,12 +103,9 @@ export default function CaseDetail() {
     setSubmittingResults(true);
     try {
       // Update case with user results via API
-      const response = await apiClient.request(`/cases/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          user_results: userResults,
-          status: 'completed'
-        })
+      const response = await Case.update(id, {
+        user_results: userResults,
+        status: 'completed'
       });
       
       setCaseData(response);

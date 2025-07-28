@@ -12,38 +12,8 @@ import RecentCasesTable from "../src/components/dashboard/RecentCasesTable";
 const ProgressChart = React.lazy(() => import("../src/components/dashboard/ProgressChart"));
 const IndustryChart = React.lazy(() => import("../src/components/dashboard/IndustryChart"));
 
-// Safe API client with error handling
-const apiClient = {
-  request: async (path, options = {}) => {
-    try {
-      const response = await fetch(`/api${path}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        },
-        ...options
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-      
-      if (response.status === 204) return null;
-      return await response.json();
-    } catch (error) {
-      console.error('API Request failed:', error);
-      throw error;
-    }
-  }
-};
-
-const Case = {
-  list: (order) => apiClient.request(`/cases?order=${encodeURIComponent(order || '')}`),
-};
-
-const User = {
-  me: () => apiClient.request('/users/me'),
-};
+// Import centralized API client
+import { Case, User } from '../lib/api/client';
 
 export default function Dashboard() {
   const router = useRouter();

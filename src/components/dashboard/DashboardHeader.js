@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
-import { createPageUrl } from "@/utils";
 
 function DashboardHeader({ user }) {
   const firstName = user?.full_name ? user.full_name.split(' ')[0] : '';
@@ -19,13 +18,13 @@ function DashboardHeader({ user }) {
       </div>
 
       <div className="flex gap-3">
-        <Link href={createPageUrl("Generate")}>
+        <Link href="/generate">
           <Button className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Generate New Case
           </Button>
         </Link>
-        <Link href={createPageUrl("Cases")}>
+        <Link href="/cases">
           <Button variant="outline">
             <FileText className="w-4 h-4 mr-2" />
             Browse Cases

@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { createPageUrl } from "@/utils";
 import format from "date-fns/format";
 
 const getStatusConfig = (status) => {
@@ -23,7 +22,7 @@ function RecentCasesTable({ cases, isLoading }) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">Recent Cases</CardTitle>
-          <Link href={createPageUrl("Cases")}>
+          <Link href="/cases">
             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
               View All
             </Button>

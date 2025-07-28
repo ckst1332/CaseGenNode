@@ -10,8 +10,7 @@ import {
   ExternalLink,
   RotateCcw
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import Link from "next/link";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -75,7 +74,7 @@ export default function RecentCases({ cases, isLoading, onRefresh }) {
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-600">No cases yet</p>
-            <Link to={createPageUrl("Generate")}>
+            <Link href="/generate">
               <Button className="mt-3 bg-blue-600 hover:bg-blue-700">
                 Generate Your First Case
               </Button>
@@ -119,7 +118,7 @@ export default function RecentCases({ cases, isLoading, onRefresh }) {
                       {statusConfig.icon}
                       {statusConfig.text}
                     </Badge>
-                    <Link to={createPageUrl(`Case?id=${case_item.id}`)}>
+                    <Link href={`/case?id=${case_item.id}`}>
                       <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
                         <ExternalLink className="w-4 h-4" />
                       </Button>

@@ -29,7 +29,7 @@ export default function GenerateEnhanced() {
   const router = useRouter();
   const { data: session } = useSession();
   
-  // Enhanced state management from React Router version
+  // Enhanced state management
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
   const [error, setError] = useState(null);

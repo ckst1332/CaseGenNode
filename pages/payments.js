@@ -14,6 +14,9 @@ import {
 import Link from "next/link";
 import Layout from "../src/pages/Layout";
 
+// Import centralized API client
+import { User } from '../lib/api/client';
+
 const pricingPlans = [
   {
     id: 'free',
@@ -84,11 +87,8 @@ export default function Payments() {
 
   const loadUser = async () => {
     try {
-      const response = await fetch('/api/users/me');
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      }
+      const userData = await User.me();
+      setUser(userData);
     } catch (error) {
       console.error("Error loading user:", error);
     }

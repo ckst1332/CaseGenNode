@@ -21,41 +21,8 @@ import {
 import Link from "next/link";
 import Layout from "../src/pages/Layout";
 
-// API Client
-const apiClient = {
-  request: async (path, options = {}) => {
-    try {
-      const response = await fetch(`/api${path}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        },
-        ...options
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
-      }
-      
-      if (response.status === 204) return null;
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
-};
-
-const User = {
-  me: () => apiClient.request('/users/me'),
-};
+// Import centralized API client
+import { User } from '../lib/api/client';
 
 export default function Account() {
   const { data: session, status } = useSession();

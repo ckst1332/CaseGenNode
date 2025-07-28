@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 
 const getStatusConfig = (status) => {
