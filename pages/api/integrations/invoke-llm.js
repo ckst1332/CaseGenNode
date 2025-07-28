@@ -56,10 +56,10 @@ const waitForRateLimit = async () => {
     console.log('Daily request counter reset');
   }
   
-  // Check daily limit (testing - more reasonable for debugging)
-  if (totalRequestsToday >= 50) {
-    console.log('⚠️  Daily request limit reached (50). Please try again tomorrow.');
-    throw new Error('Daily request limit reached (50 requests max). Please try again tomorrow.');
+  // Check daily limit (production - conservative for free tier)
+  if (totalRequestsToday >= 25) {
+    console.log('⚠️  Daily request limit reached (25). Please try again tomorrow.');
+    throw new Error('Daily request limit reached (25 requests max). Please try again tomorrow.');
   }
   
   const timeSinceLastRequest = now - lastRequestTime;
@@ -88,7 +88,7 @@ const waitForRateLimit = async () => {
   lastRequestTime = Date.now();
   requestTimes.push(lastRequestTime);
   totalRequestsToday++;
-  console.log(`Request ${totalRequestsToday}/50 for today (TESTING CONNECTION)`);
+  console.log(`Request ${totalRequestsToday}/25 for today (PRODUCTION)`);
 };
 
 const makeRequestWithRetry = async (requestFn, retryCount = 0) => {
@@ -702,10 +702,10 @@ export default async function handler(req, res) {
     console.log(`API Key Status: ${TOGETHER_API_KEY ? 'PRESENT' : 'MISSING'}`);
     console.log(`USE_MOCK: ${USE_MOCK}`);
     
-    // 🚨 EMERGENCY: FORCE MOCK MODE - BYPASS ALL API CALLS
-    const FORCE_MOCK_FOR_TESTING = true;
-    const EMERGENCY_MOCK_MODE = true;
-    console.log(`🚨 EMERGENCY MOCK MODE ACTIVE - NO API CALLS SHOULD HAPPEN`);
+    // ✅ PRODUCTION: Use real LLaMA API calls
+    const FORCE_MOCK_FOR_TESTING = false;
+    const EMERGENCY_MOCK_MODE = false;
+    console.log(`🚀 PRODUCTION MODE - Using real LLaMA 3.3-70B API`);
     console.log(`🧪 FORCE_MOCK_FOR_TESTING: ${FORCE_MOCK_FOR_TESTING}`);
     
     if (USE_MOCK || FORCE_MOCK_FOR_TESTING || EMERGENCY_MOCK_MODE) {
