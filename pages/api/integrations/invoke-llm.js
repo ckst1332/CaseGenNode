@@ -122,37 +122,89 @@ Respond with JSON only:
       throw new Error("No content received from Together AI");
     }
 
-    // Enhanced JSON extraction for LLaMA 3.3 outputs
+    // Enhanced JSON extraction for LLaMA 3.3 outputs with extensive cleaning
     let jsonContent = content.trim();
     
-    // Remove markdown code blocks if present
-    if (jsonContent.startsWith('```json')) {
-      jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (jsonContent.startsWith('```')) {
-      jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    console.log(`Raw LLaMA response length: ${content.length}`);
+    console.log(`First 500 chars: ${content.substring(0, 500)}`);
+    console.log(`Last 500 chars: ${content.substring(content.length - 500)}`);
+    
+    // Remove common LLaMA response prefixes and suffixes
+    const responsePrefixes = [
+      'Here is the',
+      'Here\'s the',
+      'I\'ll create',
+      'I\'ll generate',
+      'I\'ll build',
+      'Based on',
+      'Here are the',
+      'The following',
+      'Below is',
+      'I\'ll provide'
+    ];
+    
+    // Remove explanatory text before JSON
+    for (const prefix of responsePrefixes) {
+      const prefixIndex = jsonContent.toLowerCase().indexOf(prefix.toLowerCase());
+      if (prefixIndex !== -1) {
+        const jsonStart = jsonContent.indexOf('{', prefixIndex);
+        if (jsonStart !== -1) {
+          jsonContent = jsonContent.substring(jsonStart);
+          break;
+        }
+      }
     }
     
-    // Try multiple extraction methods
+    // Remove markdown code blocks
+    if (jsonContent.includes('```json')) {
+      jsonContent = jsonContent.replace(/^.*```json\s*/, '').replace(/\s*```.*$/, '');
+    } else if (jsonContent.includes('```')) {
+      jsonContent = jsonContent.replace(/^.*```\s*/, '').replace(/\s*```.*$/, '');
+    }
+    
+    // Remove common trailing text patterns
+    const trailingPatterns = [
+      /\n\nThis.*$/s,
+      /\n\nNote:.*$/s,
+      /\n\nI've.*$/s,
+      /\n\nThe model.*$/s,
+      /\n\nPlease.*$/s
+    ];
+    
+    for (const pattern of trailingPatterns) {
+      jsonContent = jsonContent.replace(pattern, '');
+    }
+    
+    // Try multiple extraction methods with enhanced error reporting
     let parsedJson = null;
     const extractionMethods = [
-      // Method 1: Direct parsing
-      () => JSON.parse(jsonContent),
-      // Method 2: Extract JSON object from text
+      // Method 1: Direct parsing after cleaning
       () => {
-        const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
-        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        const cleaned = jsonContent.trim();
+        return JSON.parse(cleaned);
       },
-      // Method 3: Find complete JSON object with proper nesting
+      
+      // Method 2: Find first complete JSON object
+      () => {
+        const jsonMatch = jsonContent.match(/\{[\s\S]*?\}(?=\s*$|\s*\n[^{]|\s*```|\s*\*\*)/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+        return null;
+      },
+      
+      // Method 3: Brace counting with better logic
       () => {
         let braceCount = 0;
         let startIndex = -1;
         let endIndex = -1;
         
         for (let i = 0; i < jsonContent.length; i++) {
-          if (jsonContent[i] === '{') {
+          const char = jsonContent[i];
+          if (char === '{') {
             if (startIndex === -1) startIndex = i;
             braceCount++;
-          } else if (jsonContent[i] === '}') {
+          } else if (char === '}') {
             braceCount--;
             if (braceCount === 0 && startIndex !== -1) {
               endIndex = i;
@@ -165,26 +217,74 @@ Respond with JSON only:
           return JSON.parse(jsonContent.substring(startIndex, endIndex + 1));
         }
         return null;
+      },
+      
+      // Method 4: Look for largest JSON object
+      () => {
+        const matches = [...jsonContent.matchAll(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g)];
+        if (matches.length > 0) {
+          // Find the longest match (most likely to be complete)
+          const longestMatch = matches.reduce((longest, current) => 
+            current[0].length > longest[0].length ? current : longest
+          );
+          return JSON.parse(longestMatch[0]);
+        }
+        return null;
+      },
+      
+      // Method 5: Extract everything between first { and last }
+      () => {
+        const firstBrace = jsonContent.indexOf('{');
+        const lastBrace = jsonContent.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          return JSON.parse(jsonContent.substring(firstBrace, lastBrace + 1));
+        }
+        return null;
       }
     ];
     
     for (let i = 0; i < extractionMethods.length; i++) {
       try {
         parsedJson = extractionMethods[i]();
-        if (parsedJson) {
-          console.log(`LLaMA JSON parsed successfully using method ${i + 1}`);
+        if (parsedJson && typeof parsedJson === 'object') {
+          console.log(`✅ LLaMA JSON parsed successfully using method ${i + 1}`);
+          console.log(`Parsed object keys: ${Object.keys(parsedJson).join(', ')}`);
           return parsedJson;
         }
       } catch (error) {
-        // Continue to next method
-        console.warn(`JSON extraction method ${i + 1} failed:`, error.message);
+        console.warn(`❌ JSON extraction method ${i + 1} failed:`, error.message);
+        if (i === 0) {
+          // For first method, show what we're trying to parse
+          console.log(`Attempted to parse: ${jsonContent.substring(0, 200)}...`);
+        }
       }
     }
     
-    // If all methods fail, log and throw error
-    console.error("All JSON parsing methods failed for LLaMA response");
-    console.error("Raw content:", content);
-    throw new Error(`Unable to extract valid JSON from LLaMA response. Content length: ${content.length} characters`);
+    // If all methods fail, provide comprehensive debugging info
+    console.error("🚨 All JSON parsing methods failed for LLaMA response");
+    console.error("📝 Cleaned content preview:", jsonContent.substring(0, 1000));
+    console.error("📊 Content analysis:");
+    console.error(`  - Total length: ${content.length}`);
+    console.error(`  - Cleaned length: ${jsonContent.length}`);
+    console.error(`  - Contains '{': ${jsonContent.includes('{')}`);
+    console.error(`  - Contains '}': ${jsonContent.includes('}')}`);
+    console.error(`  - First '{' at: ${jsonContent.indexOf('{')}`);
+    console.error(`  - Last '}' at: ${jsonContent.lastIndexOf('}')}`);
+    console.error(`  - Brace count: ${(jsonContent.match(/\{/g) || []).length} opening, ${(jsonContent.match(/\}/g) || []).length} closing`);
+    
+    // Save problematic response for debugging
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+      const fs = require('fs');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      try {
+        fs.writeFileSync(`/tmp/llama-debug-${timestamp}.txt`, content);
+        console.log(`💾 Saved problematic response to /tmp/llama-debug-${timestamp}.txt`);
+      } catch (fsError) {
+        console.warn('Could not save debug file:', fsError.message);
+      }
+    }
+    
+    throw new Error(`Unable to extract valid JSON from LLaMA response. Content length: ${content.length} characters. Check server logs for debugging details.`);
     
 
   } catch (error) {
