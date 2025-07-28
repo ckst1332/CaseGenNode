@@ -45,18 +45,44 @@ export default function GenerateEnhanced() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        console.log("Attempting to fetch user data...", session?.user);
         const userData = await withRetry(() => User.me(), 3, 1000);
+        console.log("User data loaded successfully:", userData);
         setUser(userData);
+        setError(null); // Clear any previous errors
       } catch (e) {
-        console.error("Failed to load user", e);
-        setError("Failed to load user data. Please refresh the page.");
+        console.error("Failed to load user:", e);
+        
+        // Provide more specific error messages based on the error type
+        let errorMessage = "Failed to load user data. Please refresh the page.";
+        
+        if (e.message?.includes('401') || e.status === 401) {
+          errorMessage = "Please log in to access this page.";
+          // Redirect to login if unauthorized
+          setTimeout(() => {
+            router.push('/login');
+          }, 2000);
+        } else if (e.message?.includes('500') || e.status >= 500) {
+          errorMessage = "Server error. Please try again in a moment.";
+        } else if (e.message?.includes('network') || !navigator.onLine) {
+          errorMessage = "Network error. Please check your internet connection.";
+        }
+        
+        setError(errorMessage);
       }
     };
     
-    if (session) {
+    if (session?.user) {
       fetchUser();
+    } else if (session === null) {
+      // Session is explicitly null (not loading), user needs to log in
+      setError("Please log in to generate cases.");
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     }
-  }, [session]);
+    // If session is undefined, we're still loading, so don't show error yet
+  }, [session, router]);
 
   const handleGenerateClick = async () => {
     if (!user) {
