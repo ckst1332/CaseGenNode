@@ -6,8 +6,67 @@ import { LLAMA_MODEL_CONFIG, LLAMA_PROMPT_GUIDELINES } from "../../../lib/ai/lla
 const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
 const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
 
+// Free tier rate limiting configuration
+const RATE_LIMIT = {
+  maxRequestsPerMinute: 10,  // Conservative limit for free tier
+  minDelayBetweenRequests: 6000, // 6 seconds between requests
+  maxRetries: 3,
+  retryDelayBase: 2000 // Start with 2 second delays
+};
+
+// Request tracking for rate limiting
+let lastRequestTime = 0;
+let requestCount = 0;
+let requestTimes = [];
+
 // Fallback to mock for development if no API key
 const USE_MOCK = !TOGETHER_API_KEY;
+
+// Rate limiting helper functions
+const waitForRateLimit = async () => {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  // Clean old request times (older than 1 minute)
+  requestTimes = requestTimes.filter(time => now - time < 60000);
+  
+  // Check if we need to wait due to rate limiting
+  if (timeSinceLastRequest < RATE_LIMIT.minDelayBetweenRequests) {
+    const waitTime = RATE_LIMIT.minDelayBetweenRequests - timeSinceLastRequest;
+    console.log(`Rate limiting: waiting ${waitTime}ms before next request`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  // Check requests per minute limit
+  if (requestTimes.length >= RATE_LIMIT.maxRequestsPerMinute) {
+    const oldestRequest = requestTimes[0];
+    const waitTime = 60000 - (now - oldestRequest) + 1000; // Add 1 second buffer
+    if (waitTime > 0) {
+      console.log(`Rate limiting: waiting ${waitTime}ms due to requests per minute limit`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  
+  // Update tracking
+  lastRequestTime = Date.now();
+  requestTimes.push(lastRequestTime);
+};
+
+const makeRequestWithRetry = async (requestFn, retryCount = 0) => {
+  try {
+    await waitForRateLimit();
+    return await requestFn();
+  } catch (error) {
+    // Handle 429 rate limit errors specifically
+    if (error.message?.includes('429') && retryCount < RATE_LIMIT.maxRetries) {
+      const waitTime = RATE_LIMIT.retryDelayBase * Math.pow(2, retryCount); // Exponential backoff
+      console.log(`429 Rate limit hit, waiting ${waitTime}ms before retry ${retryCount + 1}/${RATE_LIMIT.maxRetries}`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return makeRequestWithRetry(requestFn, retryCount + 1);
+    }
+    throw error;
+  }
+};
 
 // Real LLM implementation using Together AI's free Llama 3.3 70B
 const invokeRealLLM = async ({ prompt, response_json_schema, task_type = 'CASE_GENERATION' }) => {
@@ -28,26 +87,28 @@ ${JSON.stringify(response_json_schema, null, 2)}
 Respond with JSON only:
 `;
 
-    const response = await fetch(`${TOGETHER_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TOGETHER_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: LLAMA_MODEL_CONFIG.MODEL_NAME,
-        messages: [
-          {
-            role: "system",
-            content: LLAMA_PROMPT_GUIDELINES.SYSTEM_ROLE.financial_expert
-          },
-          {
-            role: "user",
-            content: enhancedPrompt
-          }
-        ],
-        ...LLAMA_MODEL_CONFIG[task_type]
-      })
+    const response = await makeRequestWithRetry(async () => {
+      return fetch(`${TOGETHER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TOGETHER_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: LLAMA_MODEL_CONFIG.MODEL_NAME,
+          messages: [
+            {
+              role: "system",
+              content: LLAMA_PROMPT_GUIDELINES.SYSTEM_ROLE.financial_expert
+            },
+            {
+              role: "user",
+              content: enhancedPrompt
+            }
+          ],
+          ...LLAMA_MODEL_CONFIG[task_type]
+        })
+      });
     });
 
     if (!response.ok) {

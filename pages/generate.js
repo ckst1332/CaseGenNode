@@ -20,6 +20,7 @@ import {
 // Import advanced AI logic
 import { getCasePrompt, validateCaseRealism } from '../lib/ai/case-prompts';
 import { generateFinancialModelPrompt, validateFinancialModel } from '../lib/ai/financial-model-prompts';
+import { getCombinedCaseAndModelPrompt } from '../lib/ai/combined-prompts';
 import { generateFullModelCsv, downloadCsv } from '../lib/utils/data-processing';
 
 // Import standardized API client
@@ -103,13 +104,32 @@ export default function GenerateEnhanced() {
     const industry = "Technology (SaaS)";
 
     try {
-      // Step 1: Generate company scenario using advanced prompt
+      // Single API call for both case scenario and financial model (rate limit optimization)
       setGenerationStep(1);
-      const caseGen = getCasePrompt(industry);
-      const scenarioResult = await withRetry(() => InvokeLLM({
-        prompt: caseGen.prompt,
-        response_json_schema: caseGen.schema,
-      }), 2, 2000);
+      console.log("🚀 Generating complete case and model in single LLaMA request...");
+      
+      const combinedPrompt = getCombinedCaseAndModelPrompt(industry);
+      const completeResult = await withRetry(() => InvokeLLM({
+        prompt: combinedPrompt.prompt,
+        response_json_schema: combinedPrompt.schema,
+        task_type: 'FINANCIAL_MODELING' // Use financial modeling config for comprehensive output
+      }), 2, 3000); // Increased retry delay for larger response
+
+      // Extract scenario and calculation data from combined result
+      const scenarioResult = {
+        company_name: completeResult.company_name,
+        company_description: completeResult.company_description,
+        starting_point: completeResult.starting_point,
+        assumptions: completeResult.assumptions
+      };
+
+      const calculationResult = {
+        revenue_buildup: completeResult.revenue_buildup,
+        income_statement: completeResult.income_statement,
+        cash_flow_statement: completeResult.cash_flow_statement,
+        dcf_valuation: completeResult.dcf_valuation,
+        final_metrics: completeResult.final_metrics
+      };
 
       // Validate case realism
       const caseValidation = validateCaseRealism(scenarioResult);
@@ -117,25 +137,10 @@ export default function GenerateEnhanced() {
         console.warn("Case generation warnings:", caseValidation.warnings);
       }
 
-      // Step 2: Build comprehensive financial model
+      // Step 2: Validate financial model
       setGenerationStep(2);
       const caseName = `${scenarioResult.company_name} DCF Analysis`;
       
-      const tempCaseData = { 
-        name: caseName, 
-        company_description: scenarioResult.company_description,
-        starting_point: scenarioResult.starting_point,
-        assumptions: scenarioResult.assumptions
-      };
-      
-      // Use advanced financial model generation
-      const answerKeyGen = generateFinancialModelPrompt(tempCaseData);
-      const calculationResult = await withRetry(() => InvokeLLM({
-        prompt: answerKeyGen.prompt,
-        response_json_schema: answerKeyGen.schema,
-      }), 2, 2000);
-
-      // Validate financial model
       const modelValidation = validateFinancialModel(calculationResult);
       setValidationResults(modelValidation);
       
@@ -163,7 +168,10 @@ export default function GenerateEnhanced() {
 
       // Store model data for CSV download
       const completeModelData = {
-        ...tempCaseData,
+        name: caseName,
+        company_description: scenarioResult.company_description,
+        starting_point: scenarioResult.starting_point,
+        assumptions: scenarioResult.assumptions,
         answer_key: calculationResult
       };
       setModelData(completeModelData);
