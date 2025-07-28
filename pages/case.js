@@ -287,9 +287,8 @@ export default function CaseDetail() {
               />
             </div>
           )}
-        </div>
 
-            {/* Enhanced Starting Point and Assumptions */}
+          {/* Enhanced Starting Point and Assumptions */}
             {(caseData.starting_point || caseData.year_0_baseline) && (
               <Card>
                 <CardHeader>
@@ -392,8 +391,6 @@ export default function CaseDetail() {
                 </CardContent>
               </Card>
             )}
-          </div>
-
             </div>
           
             {/* Sidebar */}
