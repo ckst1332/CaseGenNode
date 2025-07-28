@@ -12,7 +12,7 @@ import {
   CreditCard
 } from "lucide-react";
 import Link from "next/link";
-import Layout from "../src/pages/Layout";
+import Layout from "../components/layout/Layout";
 
 const pricingPlans = [
   {

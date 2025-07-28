@@ -61,7 +61,14 @@ export const apiClient = {
       create: (data) => request('/cases', {
         method: 'POST',
         body: JSON.stringify(data)
-      })
+      }),
+      get: (id) => request(`/cases/${id}`),
+      update: (id, data) => request(`/cases/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      }),
+      downloadTemplate: (id) => request(`/cases/${id}/download-template`),
+      downloadSolution: (id) => request(`/cases/${id}/download-solution`)
     }
   },
   auth: {

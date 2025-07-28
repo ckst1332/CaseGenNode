@@ -6,46 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Plus } from "lucide-react";
 import Link from "next/link";
-import Layout from "../src/pages/Layout";
+import Layout from "../components/layout/Layout";
 import CasesTable from "../src/components/cases/CasesTable";
 import CasesGrid from "../src/components/cases/CasesGrid";
 import CaseFilters from "../src/components/cases/CaseFilters";
 
-// API Client
-const apiClient = {
-  request: async (path, options = {}) => {
-    try {
-      const response = await fetch(`/api${path}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        },
-        ...options
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
-      }
-      
-      if (response.status === 204) return null;
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
-};
-
-const Case = {
-  list: (order) => apiClient.request(`/cases?order=${encodeURIComponent(order || '')}`),
-};
+// Import centralized API client
+import { Case } from "@/api/entities";
 
 export default function Cases() {
   const { data: session, status } = useSession();

@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap, AlertCircle, Cpu, Loader2, Building, Clock } from "lucide-react";
-import Layout from "../src/pages/Layout";
+import Layout from "../components/layout/Layout";
 import GenerationProgress from "../src/components/generate/GenerationProgress";
 import {
   AlertDialog,
@@ -19,57 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Import API functions
-const apiClient = {
-  request: async (path, options = {}) => {
-    try {
-      const response = await fetch(`/api${path}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        },
-        ...options
-      });
-      
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`API Error ${response.status}: ${text || response.statusText}`);
-      }
-      
-      if (response.status === 204) return null;
-      
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
-};
-
-const Case = {
-  create: (data) => apiClient.request('/cases', {
-    method: 'POST',
-    body: JSON.stringify(data)
-  })
-};
-
-const User = {
-  me: () => apiClient.request('/users/me'),
-  updateMyUserData: (data) => apiClient.request('/users/me', {
-    method: 'PATCH',
-    body: JSON.stringify(data)
-  })
-};
-
-const InvokeLLM = (payload) => apiClient.request('/integrations/invoke-llm', {
-  method: 'POST',
-  body: JSON.stringify(payload)
-});
+// Import centralized API client
+import { Case, User } from "@/api/entities";
+import { InvokeLLM } from "@/api/integrations";
 
 // Case generation prompts and schemas (simplified version)
 const getCasePrompt = (industry) => {
