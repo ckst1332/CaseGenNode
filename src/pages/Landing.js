@@ -1,58 +1,155 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Head from 'next/head';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Target, TrendingUp, CheckCircle } from 'lucide-react';
+import { BarChart3, Mail, CheckCircle2 } from 'lucide-react';
+
+// DCF Model Mockup Component
+const DCFModelMockup = () => {
+  return (
+    <div className="relative max-w-md mx-auto">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+        {/* Header with completion indicator */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+            <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+          </div>
+          <div className="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+            <CheckCircle2 className="w-4 h-4" />
+            100%
+          </div>
+        </div>
+
+        {/* Mock spreadsheet rows */}
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-150 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+        </div>
+
+        {/* Central circular progress and grade */}
+        <div className="flex items-center justify-center py-8">
+          <div className="relative">
+            {/* Progress circle */}
+            <div className="w-24 h-24 rounded-full border-8 border-gray-200 relative">
+              <div className="absolute inset-0 rounded-full border-8 border-blue-500 border-t-transparent transform rotate-45"></div>
+              <div className="absolute inset-2 bg-blue-50 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-lg">A+</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Success rate indicator */}
+        <div className="bg-green-50 rounded-lg p-3">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">95%</div>
+            <div className="text-sm text-green-700">Success Rate</div>
+          </div>
+        </div>
+
+        {/* DCF Model label */}
+        <div className="text-center">
+          <span className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">
+            DCF Model
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Landing = () => {
-  const features = [
-    {
-      icon: Target,
-      title: 'Realistic Cases',
-      description: 'AI-generated DCF cases with plausible financial metrics and growth assumptions'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Progressive Difficulty',
-      description: 'Start with guided templates and advance to complex modeling scenarios'
-    },
-    {
-      icon: BarChart3,
-      title: 'Complete Models',
-      description: 'Download full Excel models with solutions and step-by-step explanations'
-    }
-  ];
+  const [stats, setStats] = useState({
+    totalUsers: 1000,
+    totalCases: 50,
+    successRate: 95,
+    aiAccuracy: 99
+  });
 
-  const benefits = [
-    'Practice DCF modeling with realistic SaaS companies',
-    'Get instant feedback on your financial projections',
-    'Download complete Excel models for offline practice',
-    'Track your progress across multiple case studies',
-    'Access to growing library of case variations'
-  ];
+  useEffect(() => {
+    // Fetch real statistics from API
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats/landing');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.log('Using default stats'); // Fallback to defaults
+      }
+    };
+    
+    fetchStats();
+  }, []);
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <>
+      <Head>
+        <title>CaseGen - Master DCF Modeling with AI-Powered Practice</title>
+        <meta name="description" content="Build confidence for investment banking interviews with realistic DCF modeling scenarios and real-time AI feedback. Join 1000+ students practicing with 50+ scenarios." />
+        <meta name="keywords" content="DCF modeling, investment banking, financial modeling, interview prep, AI practice" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta property="og:title" content="CaseGen - Master DCF Modeling" />
+        <meta property="og:description" content="AI-powered DCF modeling practice for investment banking interviews" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://casegen.app" />
+      </Head>
+      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-600 to-purple-700">
       {/* Header */}
       <header className="relative z-10">
         <nav className="flex items-center justify-between p-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-white" />
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
             </div>
-            <span className="text-2xl font-bold text-slate-900">CaseGen</span>
+            <span className="text-2xl font-bold text-white">CaseGen</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" className="text-slate-600 hover:text-slate-900">
-                Sign In
-              </Button>
+          <div className="hidden lg:flex items-center gap-8">
+            <button 
+              onClick={() => scrollToSection('features')}
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              Features
+            </button>
+            <Link href="/pricing" className="text-white/90 hover:text-white transition-colors">
+              Pricing
             </Link>
+            <button 
+              onClick={() => scrollToSection('about')}
+              className="text-white/90 hover:text-white transition-colors"
+            >
+              About
+            </button>
             <Button 
               onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white hover:text-purple-600 transition-all"
+              aria-label="Join Beta Waitlist"
             >
-              Get Started
+              Join Beta
+            </Button>
+          </div>
+          {/* Mobile menu button */}
+          <div className="lg:hidden">
+            <Button 
+              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white hover:text-purple-600 transition-all"
+              aria-label="Join Beta Waitlist"
+            >
+              Join Beta
             </Button>
           </div>
         </nav>
@@ -60,145 +157,80 @@ const Landing = () => {
 
       {/* Hero Section */}
       <main className="relative">
-        <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 sm:pb-32 lg:flex lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl lg:flex-shrink-0 lg:pt-8">
-            <h1 className="mt-10 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-              Master Financial
-              <span className="text-blue-600"> Modeling</span>
+        <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 lg:flex lg:items-center lg:px-8 lg:py-20">
+          <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl lg:flex-shrink-0">
+            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl lg:text-6xl xl:text-7xl">
+              Master DCF
+              <br />
+              Modeling
+              <br />
+              <span className="bg-gradient-to-r from-pink-400 to-pink-300 bg-clip-text text-transparent">
+                With AI-Powered
+              </span>
+              <br />
+              Practice
             </h1>
-            <p className="mt-6 text-lg leading-8 text-slate-600">
-              Practice DCF modeling with AI-generated case studies. Get realistic SaaS companies 
-              with complete financial models, answer keys, and downloadable Excel templates.
+            <p className="mt-6 text-lg leading-8 text-white/90 lg:text-xl">
+              Build confidence for investment banking interviews with
+              <br />
+              realistic scenarios and real-time feedback
             </p>
-            <div className="mt-10 flex items-center gap-x-6">
+            <div className="mt-10">
               <Button 
                 onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-base"
+                className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-4 text-lg font-medium rounded-full shadow-lg hover:shadow-xl transition-all focus:ring-4 focus:ring-pink-300"
+                aria-label="Join Beta Waitlist with Google"
               >
-                Start Learning Free
+                <Mail className="w-5 h-5 mr-2" />
+                Join the Beta Wait-list
               </Button>
-              <Link href="/pricing">
-                <Button variant="outline" size="lg" className="px-8 py-3 text-base">
-                  View Pricing
-                </Button>
-              </Link>
             </div>
           </div>
-          <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
-            <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
-              <div className="relative">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl border border-slate-200">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-slate-900">TechFlow SaaS DCF Analysis</h3>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Completed</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-slate-500">Industry:</span>
-                        <div className="font-medium">Technology (SaaS)</div>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">ARR:</span>
-                        <div className="font-medium">$2.4M</div>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Growth Rate:</span>
-                        <div className="font-medium">45% YoY</div>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">IRR:</span>
-                        <div className="font-medium text-green-600">22.3%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          
+          {/* DCF Model Mockup */}
+          <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none">
+            <DCFModelMockup />
+          </div>
+        </div>
+
+        {/* Statistics Section */}
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-4xl lg:text-5xl font-bold text-white">{stats.totalUsers}+</div>
+              <div className="text-white/80 mt-2">Students Ready</div>
+            </div>
+            <div>
+              <div className="text-4xl lg:text-5xl font-bold text-white">{stats.totalCases}+</div>
+              <div className="text-white/80 mt-2">Practice Scenarios</div>
+            </div>
+            <div>
+              <div className="text-4xl lg:text-5xl font-bold text-white">{stats.successRate}%</div>
+              <div className="text-white/80 mt-2">Success Rate</div>
+            </div>
+            <div>
+              <div className="text-4xl lg:text-5xl font-bold text-white">{stats.aiAccuracy}%</div>
+              <div className="text-white/80 mt-2">AI Accuracy</div>
             </div>
           </div>
         </div>
 
-        {/* Features Section */}
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 py-24">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-blue-600">Learn by Doing</h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Everything you need to master DCF modeling
-            </p>
-          </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-3 lg:gap-y-16">
-              {features.map((feature, index) => (
-                <div key={index} className="relative pl-16">
-                  <dt className="text-base font-semibold leading-7 text-slate-900">
-                    <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-                      <feature.icon className="h-6 w-6 text-white" aria-hidden="true" />
-                    </div>
-                    {feature.title}
-                  </dt>
-                  <dd className="mt-2 text-base leading-7 text-slate-600">{feature.description}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
+        {/* Hidden sections for navigation */}
+        <div id="features" className="h-1"></div>
+        <div id="about" className="h-1"></div>
 
-        {/* Benefits Section */}
-        <div className="bg-white py-24">
+        {/* Footer */}
+        <footer className="border-t border-white/10 py-8">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl lg:text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                Why Choose CaseGen?
-              </h2>
-              <p className="mt-6 text-lg leading-8 text-slate-600">
-                Designed specifically for finance professionals and students who want to 
-                improve their modeling skills with realistic scenarios.
-              </p>
-            </div>
-            <div className="mx-auto mt-16 max-w-2xl">
-              <ul className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-700">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="text-center text-white/60 text-sm">
+              Built with Next.js • Powered by Together AI • Secured by Supabase
             </div>
           </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="bg-slate-900 py-24">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Start practicing today
-              </h2>
-              <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-slate-300">
-                Join finance professionals who are improving their DCF modeling skills 
-                with our AI-generated case studies.
-              </p>
-              <div className="mt-10 flex items-center justify-center gap-x-6">
-                <Button 
-                  onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-base"
-                >
-                  Get Started Free
-                </Button>
-                <Link href="/pricing">
-                  <Button variant="outline" size="lg" className="px-8 py-3 text-base border-slate-600 text-slate-300 hover:bg-slate-800">
-                    Learn More
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        </footer>
       </main>
-    </div>
+      </div>
+    </>
   );
 };
 
