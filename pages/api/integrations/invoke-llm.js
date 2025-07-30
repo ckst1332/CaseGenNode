@@ -510,14 +510,20 @@ const getMockResponse = ({ prompt, response_json_schema }) => {
           rd: 2570624, 
           ga: 1285312, 
           ebitda: 3598874, 
+          depreciation: 50000,
           ebit: 3548874, 
           taxes: 887219, 
           net_income: 2661655,
           formula: {
             cogs: "Revenue * (1 - Gross_Margin)",
             gross_profit: "Revenue - COGS",
+            sales_marketing: "Revenue * 0.25",
+            rd: "Revenue * 0.20",
+            ga: "Revenue * 0.10",
             ebitda: "Gross_Profit - Sales_Marketing - R&D - G&A",
-            taxes: "EBIT * Tax_Rate"
+            ebit: "EBITDA - Depreciation",
+            taxes: "EBIT * Tax_Rate",
+            net_income: "EBIT - Taxes"
           }
         },
         { 
@@ -529,12 +535,20 @@ const getMockResponse = ({ prompt, response_json_schema }) => {
           rd: 3490067, 
           ga: 1745034, 
           ebitda: 4886094, 
-          ebit: 4836094, 
-          taxes: 1209024, 
-          net_income: 3627070,
+          depreciation: 75000,
+          ebit: 4811094, 
+          taxes: 1202774, 
+          net_income: 3608320,
           formula: {
-            cogs: "17450336 * 0.17",
-            ebitda: "14483779 - 4362584 - 3490067 - 1745034"
+            cogs: "Revenue * (1 - Gross_Margin)",
+            gross_profit: "Revenue - COGS",
+            sales_marketing: "Revenue * 0.25",
+            rd: "Revenue * 0.20",
+            ga: "Revenue * 0.10",
+            ebitda: "Gross_Profit - Sales_Marketing - R&D - G&A",
+            ebit: "EBITDA - Depreciation",
+            taxes: "EBIT * Tax_Rate",
+            net_income: "EBIT - Taxes"
           }
         },
         { 
@@ -546,8 +560,9 @@ const getMockResponse = ({ prompt, response_json_schema }) => {
           rd: 4463786, 
           ga: 2231893, 
           ebitda: 6249299, 
-          ebit: 6199299, 
-          taxes: 1549825, 
+          depreciation: 100000,
+          ebit: 6149299, 
+          taxes: 1537325, 
           net_income: 4649474,
           formula: {
             cogs: "22318928 * 0.17",

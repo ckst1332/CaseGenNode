@@ -71,7 +71,7 @@ export default function CaseDetail() {
     if (session && id) {
       loadCase();
     }
-  }, [session, status, router, id]);
+  }, [session, status, id]);
 
   const loadCase = async () => {
     if (!id) return; // Prevent loading if no ID
