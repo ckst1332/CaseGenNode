@@ -172,6 +172,14 @@ export default function Generate() {
 
       // Step 3: Create case with comprehensive data
       setGenerationStep(3);
+      console.log("🔥 Creating case with data:", {
+        caseName,
+        industry,
+        companyDescription: scenarioResult.company_description,
+        hasAssumptions: !!scenarioResult.assumptions,
+        hasAnswerKey: !!calculationResult
+      });
+      
       const newCase = await withRetry(() => Case.create({
         name: caseName,
         type: "DCF",
@@ -183,6 +191,9 @@ export default function Generate() {
         answer_key: calculationResult,
         answer_key_excel: null,
       }), 2, 1000);
+
+      console.log("✅ Case created successfully with ID:", newCase.id);
+      console.log("📄 Case data:", newCase);
 
       // Store model data for CSV download
       const completeModelData = {
@@ -208,7 +219,11 @@ export default function Generate() {
 
       // Step 4: Navigate to case
       setGenerationStep(4);
+      console.log("🚀 Navigating to case page with ID:", newCase.id);
+      console.log("📍 Navigation URL:", `/case?id=${newCase.id}`);
+      
       setTimeout(() => {
+        console.log("⏰ Executing navigation now...");
         router.push(`/case?id=${newCase.id}`);
       }, 1000);
 

@@ -74,15 +74,26 @@ export default function CaseDetail() {
   }, [session, status, id]);
 
   const loadCase = async () => {
-    if (!id) return; // Prevent loading if no ID
+    if (!id) {
+      console.log("❌ No case ID provided, skipping load");
+      return; // Prevent loading if no ID
+    }
+    
+    console.log("🔍 Loading case with ID:", id);
     setIsLoading(true);
+    
     try {
+      console.log("📡 Making API call to get case...");
       const data = await Case.get(id);
+      console.log("✅ Case loaded successfully:", data);
       setCaseData(data);
     } catch (error) {
-      console.error("Error loading case:", error);
+      console.error("❌ Error loading case:", error);
+      console.error("Error details:", error.message);
     }
+    
     setIsLoading(false);
+    console.log("🏁 Case loading completed");
   };
 
   // Determine current workflow step based on case data
