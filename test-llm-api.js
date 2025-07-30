@@ -15,7 +15,7 @@ async function testLLMAPI() {
     console.log('✅ API key found, testing request...');
     
     const requestBody = {
-      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      model: "mistralai/Mistral-Small-24B-Instruct-2501",
       messages: [
         {
           role: "system",
