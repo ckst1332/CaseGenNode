@@ -148,7 +148,10 @@ Respond with JSON only:
       presence_penalty: LLAMA_MODEL_CONFIG[task_type].presence_penalty
     };
 
-    console.log(`Request body for ${task_type}:`, JSON.stringify(requestBody, null, 2));
+    console.log(`🔧 Making Together AI request for ${task_type}`);
+    console.log(`🤖 Model: ${requestBody.model}`);
+    console.log(`📊 Max tokens: ${requestBody.max_tokens}`);
+    console.log(`🌡️ Temperature: ${requestBody.temperature}`);
 
     const response = await makeRequestWithRetry(async () => {
       return fetch(`${TOGETHER_BASE_URL}/chat/completions`, {
@@ -721,6 +724,8 @@ export default async function handler(req, res) {
     
     // Debug API key availability
     console.log(`API Key Status: ${TOGETHER_API_KEY ? 'PRESENT' : 'MISSING'}`);
+    console.log(`API Key Length: ${TOGETHER_API_KEY ? TOGETHER_API_KEY.length : 0}`);
+    console.log(`API Key Prefix: ${TOGETHER_API_KEY ? TOGETHER_API_KEY.substring(0, 10) + '...' : 'NONE'}`);
     console.log(`USE_MOCK: ${USE_MOCK}`);
     
     // ✅ PRODUCTION: Use real Mistral API calls
