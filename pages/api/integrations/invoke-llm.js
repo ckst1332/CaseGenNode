@@ -322,7 +322,7 @@ Respond with JSON only:
       try {
         parsedJson = extractionMethods[i]();
         if (parsedJson && typeof parsedJson === 'object') {
-          console.log(`✅ LLaMA JSON parsed successfully using method ${i + 1}`);
+          console.log(`✅ Mistral AI JSON parsed successfully using method ${i + 1}`);
           console.log(`Parsed object keys: ${Object.keys(parsedJson).join(', ')}`);
           return parsedJson;
         }
@@ -336,7 +336,7 @@ Respond with JSON only:
     }
     
     // If all methods fail, provide comprehensive debugging info
-    console.error("🚨 All JSON parsing methods failed for LLaMA response");
+    console.error("🚨 All JSON parsing methods failed for Mistral AI response");
     console.error("📝 Cleaned content preview:", jsonContent.substring(0, 1000));
     console.error("📊 Content analysis:");
     console.error(`  - Total length: ${content.length}`);
@@ -352,14 +352,14 @@ Respond with JSON only:
       const fs = require('fs');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       try {
-        fs.writeFileSync(`/tmp/llama-debug-${timestamp}.txt`, content);
-        console.log(`💾 Saved problematic response to /tmp/llama-debug-${timestamp}.txt`);
+        fs.writeFileSync(`/tmp/mistral-debug-${timestamp}.txt`, content);
+        console.log(`💾 Saved problematic response to /tmp/mistral-debug-${timestamp}.txt`);
       } catch (fsError) {
         console.warn('Could not save debug file:', fsError.message);
       }
     }
     
-    throw new Error(`Unable to extract valid JSON from LLaMA response. Content length: ${content.length} characters. Check server logs for debugging details.`);
+    throw new Error(`Unable to extract valid JSON from Mistral AI response. Content length: ${content.length} characters. Check server logs for debugging details.`);
     
 
   } catch (error) {
@@ -723,10 +723,10 @@ export default async function handler(req, res) {
     console.log(`API Key Status: ${TOGETHER_API_KEY ? 'PRESENT' : 'MISSING'}`);
     console.log(`USE_MOCK: ${USE_MOCK}`);
     
-    // ✅ PRODUCTION: Use real LLaMA API calls
+    // ✅ PRODUCTION: Use real Mistral API calls
     const FORCE_MOCK_FOR_TESTING = false;
     const EMERGENCY_MOCK_MODE = false;
-    console.log(`🚀 PRODUCTION MODE - Using real LLaMA 3.3-70B API`);
+    console.log(`🚀 PRODUCTION MODE - Using real Mistral AI via Together API`);
     console.log(`🧪 FORCE_MOCK_FOR_TESTING: ${FORCE_MOCK_FOR_TESTING}`);
     
     if (USE_MOCK || FORCE_MOCK_FOR_TESTING || EMERGENCY_MOCK_MODE) {
@@ -736,7 +736,11 @@ export default async function handler(req, res) {
       await new Promise(resolve => setTimeout(resolve, 1500));
       response = getMockResponse({ prompt, response_json_schema });
     } else {
-      console.log(`🚀 Using LLaMA 3.3-70B Turbo (${detectedTaskType}) for user: ${session.user.id || session.user.email}`);
+      if (!TOGETHER_API_KEY) {
+        console.error("❌ TOGETHER_API_KEY is missing in production environment!");
+        throw new Error("AI service configuration error. Please contact support.");
+      }
+      console.log(`🚀 Using Mistral AI via Together API (${detectedTaskType}) for user: ${session.user.id || session.user.email}`);
       response = await invokeRealLLM({ prompt, response_json_schema, task_type: detectedTaskType });
     }
     

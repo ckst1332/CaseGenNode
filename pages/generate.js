@@ -114,7 +114,7 @@ export default function Generate() {
       // ✅ OPTIMIZED: Single API call for both case scenario and financial model
       // This prevents 429 rate limit errors by consolidating requests
       setGenerationStep(1);
-      console.log("🚀 Generating complete case and model in SINGLE LLaMA request...");
+      console.log("🚀 Generating complete case and model in SINGLE Mistral AI request...");
       console.log("🎯 Using combined prompt to avoid multiple API calls");
       
       // 🚀 PRODUCTION: Using full comprehensive financial model generation
@@ -124,16 +124,29 @@ export default function Generate() {
       console.log("💼 Using institutional-grade prompts with enhanced line item complexity");
       
       // Single consolidated API call for complete financial model
-      const completeResult = await withRetry(() => InvokeLLM({
-        prompt: comprehensivePrompt,
-        response_json_schema: comprehensiveSchema,
-        task_type: 'FINANCIAL_MODELING' // Use comprehensive task type
-      }), 2, 8000); // Longer timeout for complex response
-      
-      console.log("✅ Single API call completed successfully");
+      let completeResult;
+      try {
+        completeResult = await withRetry(() => InvokeLLM({
+          prompt: comprehensivePrompt,
+          response_json_schema: comprehensiveSchema,
+          task_type: 'FINANCIAL_MODELING' // Use comprehensive task type
+        }), 2, 8000); // Longer timeout for complex response
+        
+        console.log("✅ Mistral AI call completed successfully");
+      } catch (apiError) {
+        console.error("❌ Mistral AI API call failed:", apiError);
+        console.error("API Error details:", apiError.message);
+        throw new Error(`AI model generation failed: ${apiError.message}. Please try again.`);
+      }
 
       // 🚀 PRODUCTION: Handle comprehensive financial model response
       console.log("✅ Received comprehensive financial model:", completeResult);
+      
+      // Validate that we received proper case data structure
+      if (!completeResult || typeof completeResult !== 'object') {
+        console.error("❌ Invalid response structure from AI:", typeof completeResult);
+        throw new Error("AI model returned invalid data structure. Please try again.");
+      }
       
       // Use the complete result directly from Mistral API
       const scenarioResult = completeResult;
