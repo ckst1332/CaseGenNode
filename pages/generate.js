@@ -112,107 +112,29 @@ export default function Generate() {
       console.log("🚀 Generating complete case and model in SINGLE LLaMA request...");
       console.log("🎯 Using combined prompt to avoid multiple API calls");
       
-      // 🧪 SIMPLE TEST: Testing with minimal prompt to isolate rate limit vs prompt issues
-      const simplePrompt = "Generate a SaaS company case study with basic financial data. Return valid JSON only.";
-      const simpleSchema = {
-        type: "object",
-        properties: {
-          company_name: { type: "string" },
-          company_description: { type: "string" },
-          starting_point: {
-            type: "object",
-            properties: {
-              current_arr: { type: "number" },
-              current_customers: { type: "number" },
-              current_arpu: { type: "number" }
-            }
-          },
-          test_message: { type: "string" }
-        },
-        required: ["company_name", "company_description", "starting_point", "test_message"]
-      };
+      // 🚀 PRODUCTION: Using full comprehensive financial model generation
+      const { prompt: comprehensivePrompt, schema: comprehensiveSchema } = getCombinedCaseAndModelPrompt(selectedIndustry);
       
-      console.log("🧪 SIMPLE TEST: Using minimal prompt to test API connection");
-      console.log("🎯 This will help isolate rate limiting vs prompt complexity issues");
+      console.log("🚀 PRODUCTION MODE: Generating comprehensive 3-statement financial model");
+      console.log("💼 Using institutional-grade prompts with enhanced line item complexity");
       
-      // Single consolidated API call - NO multiple requests
+      // Single consolidated API call for complete financial model
       const completeResult = await withRetry(() => InvokeLLM({
-        prompt: simplePrompt,
-        response_json_schema: simpleSchema,
-        task_type: 'CASE_GENERATION' // Use simpler task type
-      }), 2, 5000); // Retry delay for comprehensive response
+        prompt: comprehensivePrompt,
+        response_json_schema: comprehensiveSchema,
+        task_type: 'FINANCIAL_MODELING' // Use comprehensive task type
+      }), 2, 8000); // Longer timeout for complex response
       
       console.log("✅ Single API call completed successfully");
 
-      // 🧪 SIMPLE TEST: Handle simple response with fallback data
-      console.log("🧪 Received response:", completeResult);
+      // 🚀 PRODUCTION: Handle comprehensive financial model response
+      console.log("✅ Received comprehensive financial model:", completeResult);
       
-      const scenarioResult = {
-        company_name: completeResult.company_name || "TestCorp SaaS",
-        company_description: completeResult.company_description || "A test SaaS company for API validation",
-        starting_point: {
-          current_arr: completeResult.starting_point?.current_arr || 2000000,
-          current_customers: completeResult.starting_point?.current_customers || 500,
-          current_arpu: completeResult.starting_point?.current_arpu || 4000,
-          current_gross_margin: 0.85,
-          current_sales_marketing: 400000,
-          current_rd: 300000,
-          current_ga: 200000,
-          opening_cash: 1000000,
-          opening_ppe: 100000
-        },
-        assumptions: {
-          operational_drivers: {
-            customer_acquisition_growth: [150, 135, 120, 108, 97],
-            annual_churn_rate: 0.08,
-            arpu_growth_rate: 0.12,
-            sales_marketing_as_percent_revenue: 0.20,
-            rd_as_percent_revenue: 0.15,
-            ga_as_percent_revenue: 0.10
-          },
-          financial_assumptions: {
-            wacc: 0.125,
-            terminal_growth_rate: 0.025,
-            tax_rate: 0.25,
-            projection_years: 5
-          }
-        }
-      };
+      // Use the complete result directly from Mistral API
+      const scenarioResult = completeResult;
 
-      // Generate basic financial model data for testing
-      const calculationResult = {
-        revenue_buildup: [
-          { year: 1, customers: 650, arpu: 4480, revenue: 2912000 },
-          { year: 2, customers: 785, arpu: 5018, revenue: 3939130 },
-          { year: 3, customers: 905, arpu: 5620, revenue: 5086100 },
-          { year: 4, customers: 1013, arpu: 6294, revenue: 6375822 },
-          { year: 5, customers: 1110, arpu: 7049, revenue: 7824390 }
-        ],
-        income_statement: [
-          { year: 1, revenue: 2912000, ebitda: 582400, net_income: 218400 },
-          { year: 2, revenue: 3939130, ebitda: 787826, net_income: 295435 },
-          { year: 3, revenue: 5086100, ebitda: 1017220, net_income: 381458 },
-          { year: 4, revenue: 6375822, ebitda: 1275164, net_income: 478187 },
-          { year: 5, revenue: 7824390, ebitda: 1564878, net_income: 586829 }
-        ],
-        cash_flow_statement: [
-          { year: 1, free_cash_flow: 200000 },
-          { year: 2, free_cash_flow: 270000 },
-          { year: 3, free_cash_flow: 350000 },
-          { year: 4, free_cash_flow: 440000 },
-          { year: 5, free_cash_flow: 540000 }
-        ],
-        dcf_valuation: {
-          enterprise_value: 12500000,
-          equity_value: 13500000
-        },
-        final_metrics: {
-          test_message: completeResult.test_message || "Simple API test successful",
-          npv: 8500000,
-          irr: 0.18,
-          ev_revenue_multiple: 1.6
-        }
-      };
+      // Use the comprehensive financial model directly from Mistral API
+      const calculationResult = completeResult;
 
       // Validate case realism (VP/MD Level)
       const caseValidation = validateCaseRealism(calculationResult);
