@@ -41,6 +41,11 @@ export default function Generate() {
   const [modelData, setModelData] = useState(null);
   const [downloadReady, setDownloadReady] = useState(false);
   const [validationResults, setValidationResults] = useState(null);
+  
+  // Model configuration options
+  const [selectedIndustry, setSelectedIndustry] = useState("Technology (SaaS)");
+  const [companyStage, setCompanyStage] = useState("scale-up");
+  const [complexity, setComplexity] = useState("institutional");
 
   // Enhanced user data fetching with error handling
   useEffect(() => {
@@ -255,7 +260,7 @@ export default function Generate() {
   return (
     <Layout currentPageName="Generate">
       <div className="h-full flex flex-col items-center justify-center text-center p-6">
-        <div className="bg-white p-10 rounded-2xl shadow-2xl border border-slate-200 max-w-lg">
+        <div className="bg-white p-10 rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full">
           <div className="mb-6">
             <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
               <Cpu className="w-10 h-10 text-white" />
@@ -263,12 +268,60 @@ export default function Generate() {
           </div>
 
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
-            🧪 API TEST - Generate New Case
+            🚀 Generate Financial Model
           </h1>
           <p className="text-slate-600 text-lg mb-8">
-            Create a new, realistic DCF modeling challenge for a SaaS company with advanced AI validation.
-            <br /><span className="text-sm text-green-600 font-medium">✅ Optimized with single API call to prevent rate limits</span>
+            Create institutional-grade DCF models with comprehensive 3-statement analysis.
+            <br /><span className="text-sm text-blue-600 font-medium">✨ Powered by Mistral AI with enhanced validation</span>
           </p>
+
+          {/* Model Configuration Controls */}
+          <div className="space-y-4 mb-8 text-left">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Industry Focus</label>
+              <select 
+                value={selectedIndustry} 
+                onChange={(e) => setSelectedIndustry(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Technology (SaaS)">Technology (SaaS)</option>
+                <option value="E-commerce">E-commerce</option>
+                <option value="FinTech">FinTech</option>
+                <option value="HealthTech">HealthTech</option>
+                <option value="EdTech">EdTech</option>
+                <option value="MarTech">MarTech</option>
+                <option value="AI/ML Platform">AI/ML Platform</option>
+                <option value="Cybersecurity">Cybersecurity</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Company Stage</label>
+              <select 
+                value={companyStage} 
+                onChange={(e) => setCompanyStage(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="early-stage">Early Stage (ARR: $1-5M)</option>
+                <option value="scale-up">Scale-up (ARR: $5-25M)</option>
+                <option value="growth">Growth (ARR: $25-100M)</option>
+                <option value="mature">Mature (ARR: $100M+)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Model Complexity</label>
+              <select 
+                value={complexity} 
+                onChange={(e) => setComplexity(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="institutional">Institutional Grade (VP/MD Review)</option>
+                <option value="advanced">Advanced (Analyst Level)</option>
+                <option value="standard">Standard (Associate Level)</option>
+              </select>
+            </div>
+          </div>
 
           {error && (
             <Alert variant="destructive" className="mb-6 text-left">
