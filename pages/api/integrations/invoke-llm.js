@@ -6,12 +6,12 @@ import { LLAMA_MODEL_CONFIG, LLAMA_PROMPT_GUIDELINES } from "../../../lib/ai/lla
 const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
 const TOGETHER_BASE_URL = "https://api.together.xyz/v1";
 
-// Production rate limiting for Together AI free tier
+// Production rate limiting for Together AI (60 RPM limit)
 const RATE_LIMIT = {
-  maxRequestsPerMinute: 4,   // Conservative limit for free tier
-  minDelayBetweenRequests: 20000, // 20 seconds between requests
-  maxRetries: 1,             // Single retry if needed
-  retryDelayBase: 10000      // 10 second retry delay
+  maxRequestsPerMinute: 50,   // Use 50 out of 60 RPM to leave buffer
+  minDelayBetweenRequests: 2000, // 2 seconds between requests (allows 30 RPM)
+  maxRetries: 2,             // Allow more retries with higher limits
+  retryDelayBase: 3000       // 3 second retry delay
 };
 
 // Request tracking for rate limiting (persistent across API calls)
@@ -56,10 +56,10 @@ const waitForRateLimit = async () => {
     console.log('Daily request counter reset');
   }
   
-  // Check daily limit (production - conservative for free tier)
-  if (totalRequestsToday >= 25) {
-    console.log('⚠️  Daily request limit reached (25). Please try again tomorrow.');
-    throw new Error('Daily request limit reached (25 requests max). Please try again tomorrow.');
+  // Check daily limit (reasonable for 60 RPM tier)
+  if (totalRequestsToday >= 200) {
+    console.log('⚠️  Daily request limit reached (200). Please try again tomorrow.');
+    throw new Error('Daily request limit reached (200 requests max). Please try again tomorrow.');
   }
   
   const timeSinceLastRequest = now - lastRequestTime;
@@ -88,7 +88,7 @@ const waitForRateLimit = async () => {
   lastRequestTime = Date.now();
   requestTimes.push(lastRequestTime);
   totalRequestsToday++;
-  console.log(`Request ${totalRequestsToday}/25 for today (PRODUCTION)`);
+  console.log(`Request ${totalRequestsToday}/200 for today (PRODUCTION)`);
 };
 
 const makeRequestWithRetry = async (requestFn, retryCount = 0) => {
