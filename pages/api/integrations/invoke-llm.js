@@ -114,20 +114,13 @@ const makeRequestWithRetry = async (requestFn, retryCount = 0) => {
 const invokeRealLLM = async ({ prompt, response_json_schema, task_type = 'CASE_GENERATION' }) => {
   try {
     // Enhanced prompt for JSON schema compliance
-    const enhancedPrompt = `
-${prompt}
+    const enhancedPrompt = `${prompt}
 
-CRITICAL INSTRUCTIONS:
-- You MUST respond with valid JSON that exactly matches the provided schema
-- Do NOT include any text outside the JSON object
-- Ensure all required fields are present
-- Use realistic, professional financial data
+CRITICAL: Respond with VALID JSON ONLY. No explanations, no markdown, no text before or after.
 
-Required JSON Schema:
-${JSON.stringify(response_json_schema, null, 2)}
+Schema: ${JSON.stringify(response_json_schema)}
 
-Respond with JSON only:
-`;
+JSON:`;
 
     const requestBody = {
       model: LLAMA_MODEL_CONFIG.MODEL_NAME,

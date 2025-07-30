@@ -21,6 +21,7 @@ import {
 import { validateCaseRealism } from '../lib/ai/case-prompts';
 import { validateFinancialModel } from '../lib/ai/financial-model-prompts';
 import { getCombinedCaseAndModelPrompt } from '../lib/ai/combined-prompts';
+import { getSimpleCasePrompt } from '../lib/ai/simple-case-prompt';
 import { generateFullModelCsv, downloadCsv } from '../lib/utils/data-processing';
 
 // Import standardized API client
@@ -117,8 +118,8 @@ export default function Generate() {
       console.log("🚀 Generating complete case and model in SINGLE Mistral AI request...");
       console.log("🎯 Using combined prompt to avoid multiple API calls");
       
-      // 🚀 PRODUCTION: Using full comprehensive financial model generation
-      const { prompt: comprehensivePrompt, schema: comprehensiveSchema } = getCombinedCaseAndModelPrompt(selectedIndustry);
+      // 🚀 SIMPLIFIED: Using simple prompt for better JSON compliance
+      const { prompt: comprehensivePrompt, schema: comprehensiveSchema } = getSimpleCasePrompt(selectedIndustry);
       
       console.log("🚀 PRODUCTION MODE: Generating comprehensive 3-statement financial model");
       console.log("💼 Using institutional-grade prompts with enhanced line item complexity");
