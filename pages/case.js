@@ -313,15 +313,15 @@ export default function CaseDetail() {
               {/* Quick Facts Grid */}
               <div className="grid md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg">
                 <div className="text-center">
-                  <div className="text-sm text-slate-600">Starting ARR</div>
+                  <div className="text-sm text-slate-600">Year 1 Revenue</div>
                   <div className="font-semibold text-lg">
-                    ${(caseData.starting_point?.current_arr || 0).toLocaleString()}
+                    ${(caseData.answer_key?.projections?.[0]?.revenue || 0).toLocaleString()}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-sm text-slate-600">WACC</div>
                   <div className="font-semibold text-lg">
-                    {((caseData.assumptions?.financial_assumptions?.wacc || 0) * 100).toFixed(1)}%
+                    {((caseData.assumptions?.wacc || caseData.answer_key?.assumptions?.wacc || 0) * 100).toFixed(1)}%
                   </div>
                 </div>
                 <div className="text-center">
@@ -366,37 +366,77 @@ export default function CaseDetail() {
             </div>
           )}
 
-          {/* Enhanced Starting Point and Assumptions */}
-            {(caseData.starting_point || caseData.year_0_baseline) && (
+          {/* Financial Projections Display */}
+            {caseData.answer_key?.projections && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    Year 0 Baseline & Model Assumptions
+                    Financial Projections
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Year 0 Baseline Data */}
+                  {/* Financial Projections Table */}
                   <div>
                     <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
-                      📊 Starting Point (Year 0)
+                      📊 5-Year Financial Model
                     </h4>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {Object.entries(caseData.starting_point || caseData.year_0_baseline?.operational_metrics || {}).map(([key, value]) => (
-                        <div key={key} className="p-3 bg-slate-50 rounded-lg border text-center">
-                          <div className="text-xs text-slate-600 mb-1 capitalize">
-                            {key.replace(/_/g, ' ')}
-                          </div>
-                          <div className="font-semibold text-slate-900 text-sm">
-                            {typeof value === 'number' ? 
-                              (key.includes('margin') || key.includes('rate') || key.includes('percent') ? 
-                                `${(value * 100).toFixed(1)}%` : value.toLocaleString()) : 
-                              value}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Year</th>
+                            <th className="text-right p-2">Revenue</th>
+                            <th className="text-right p-2">Gross Profit</th>
+                            <th className="text-right p-2">OpEx</th>
+                            <th className="text-right p-2">EBITDA</th>
+                            <th className="text-right p-2">Net Income</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {caseData.answer_key.projections.map((year, index) => (
+                            <tr key={index} className="border-b">
+                              <td className="p-2 font-medium">Year {year.year}</td>
+                              <td className="p-2 text-right">${year.revenue?.toLocaleString() || 'N/A'}</td>
+                              <td className="p-2 text-right">${year.gross_profit?.toLocaleString() || 'N/A'}</td>
+                              <td className="p-2 text-right">${year.operating_expenses?.toLocaleString() || 'N/A'}</td>
+                              <td className="p-2 text-right">${year.ebitda?.toLocaleString() || 'N/A'}</td>
+                              <td className="p-2 text-right">${year.net_income?.toLocaleString() || 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
+
+                  {/* Model Assumptions */}
+                  {caseData.assumptions && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 mb-3 flex items-center gap-2">
+                        ⚙️ Model Assumptions
+                      </h4>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="p-3 bg-blue-50 rounded-lg border text-center">
+                          <div className="text-xs text-slate-600 mb-1">WACC</div>
+                          <div className="font-semibold text-slate-900">
+                            {((caseData.assumptions.wacc || 0) * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg border text-center">
+                          <div className="text-xs text-slate-600 mb-1">Tax Rate</div>
+                          <div className="font-semibold text-slate-900">
+                            {((caseData.assumptions.tax_rate || 0) * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg border text-center">
+                          <div className="text-xs text-slate-600 mb-1">Terminal Growth</div>
+                          <div className="font-semibold text-slate-900">
+                            {((caseData.assumptions.terminal_growth || 0) * 100).toFixed(1)}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Operational Assumptions */}
                   {caseData.assumptions?.operational_drivers && (
